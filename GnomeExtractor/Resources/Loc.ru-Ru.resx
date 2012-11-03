@@ -285,7 +285,7 @@
   <data name="downloadNewVersion" xml:space="preserve">
     <value>перейти на официальный сайт для скачивания?</value>
   </data>
-  <data name="lastestVersion" xml:space="preserve">
+  <data name="latestVersion" xml:space="preserve">
     <value>Обновления не найдены, вы используете последнюю версию</value>
   </data>
   <data name="newestVersion" xml:space="preserve">

@@ -285,7 +285,7 @@
   <data name="downloadNewVersion" xml:space="preserve">
     <value>go to the official website to download?</value>
   </data>
-  <data name="lastestVersion" xml:space="preserve">
+  <data name="latestVersion" xml:space="preserve">
     <value>No updates avaiable at this time, you have lastest version</value>
   </data>
   <data name="newestVersion" xml:space="preserve">

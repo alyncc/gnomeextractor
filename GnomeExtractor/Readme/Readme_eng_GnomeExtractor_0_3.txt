@@ -47,11 +47,11 @@ failures and crashes. Functioning on some operating systems isn't garanteed.
 
 ---II. Contacts---
 
-Website:		http://gnomeextractor.sourceforge.net/
+Website:		http://gnomex.tk
 
 Group of discussions: 	http://vk.com/topic-40365130_26961995
 
-Project page: 		http://sourceforge.net/projects/gnomeextractor/
+Project page: 		http://code.google.com/p/gnomeextractor
 
 
 

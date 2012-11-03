@@ -47,11 +47,11 @@ VII. Благодарности
 
 ---II.Контакты---
 
-Сайт проекта:		http://gnomeextractor.sourceforge.net/
+Сайт проекта:		http://gnomex.tk
 
 Группа обсуждений: 	http://vk.com/topic-40365130_26961995
 
-Страница проекта: 	http://sourceforge.net/projects/gnomeextractor/
+Страница проекта: 	http://code.google.com/p/gnomeextractor
 
 
 

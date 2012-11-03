@@ -351,9 +351,9 @@ namespace GnomeExtractor.Resources {
         /// <summary>
         ///   Ищет локализованную строку, похожую на No updates avaiable at this time, you have lastest version.
         /// </summary>
-        internal static string lastestVersion {
+        internal static string latestVersion {
             get {
-                return ResourceManager.GetString("lastestVersion", resourceCulture);
+                return ResourceManager.GetString("latestVersion", resourceCulture);
             }
         }
         

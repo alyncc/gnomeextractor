@@ -42,7 +42,10 @@ namespace GnomeExtractor
         bool isCheatsOn;
         bool isLabelsVertical;
         bool isAutoUpdateEnabled;
+        bool isUpdateFailed = false;
+        bool isUpdatesNeeded = false;
         int[] version = { 0, 3, 22 };
+        string[] latestVersion;
         string filePath;
         string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
         
@@ -62,7 +65,7 @@ namespace GnomeExtractor
             {
                 string lang = "en-US";
                 if (CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "ru")
-                    if (!File.Exists("ru-RU\\GnomeExtractor.resources.dll")) lang = "ru-RU";
+                    if (File.Exists("ru-RU\\GnomeExtractor.resources.dll")) lang = "ru-RU";
                 
                 CultureManager.UICulture = new CultureInfo(lang);
                 Settings.Default.ProgramLanguage = lang;
@@ -494,12 +497,19 @@ namespace GnomeExtractor
         {
             updater.DoWork -= new DoWorkEventHandler(updater_Update);
             updater.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(updater_UpdateCompleted);
+            if (isUpdateFailed) MessageBox.Show(resourceManager.GetString("latestVersion"));
+            if (isUpdatesNeeded)
+                if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + latestVersion[0] + "." + latestVersion[1] + " build " + latestVersion[2] + ", " +
+                    resourceManager.GetString("downloadNewVersion"), resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo))
+                    Process.Start("http://gnomex.tk");
+            isUpdateFailed = false;
+            isUpdatesNeeded = false;
             updatingMenuItem.IsEnabled = true;
         }
 
         private void updater_Update(object sender, DoWorkEventArgs e)
         {
-            WebRequest request = WebRequest.Create(new Uri("http://gnomeextractor.sourceforge.net/version/current"));
+            WebRequest request = WebRequest.Create(new Uri("http://gnomex.tk/version/current"));
 
             WebResponse response = request.GetResponse();
 
@@ -508,18 +518,13 @@ namespace GnomeExtractor
             reader.Close();
             response.Close();
 
-            string[] reqVersion;
-            reqVersion = log.Split('.', 'b');
+            latestVersion = log.Split('.', 'b');
 
-            if ((version[0] == Double.Parse(reqVersion[0]) && version[1] == Double.Parse(reqVersion[1]) && version[2] < Double.Parse(reqVersion[2])) ||
-            (version[0] == Double.Parse(reqVersion[0]) && version[1] < Double.Parse(reqVersion[1])) || (version[0] < Double.Parse(reqVersion[0])))
-            {
-                if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + reqVersion[0] + "." + reqVersion[1] + " build " + reqVersion[2] + ", " +
-                    resourceManager.GetString("downloadNewVersion"), resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo))
-                    Process.Start("http://gnomeextractor.sourceforge.net");
-            }
+            if ((version[0] == Double.Parse(latestVersion[0]) && version[1] == Double.Parse(latestVersion[1]) && version[2] < Double.Parse(latestVersion[2])) ||
+            (version[0] == Double.Parse(latestVersion[0]) && version[1] < Double.Parse(latestVersion[1])) || (version[0] < Double.Parse(latestVersion[0])))
+                isUpdatesNeeded = true;
             else
-                if ((bool)e.Argument) MessageBox.Show(resourceManager.GetString("lastestVersion"));
+                if ((bool)e.Argument) isUpdateFailed = true;
         }
 
         private void autoUpdatingMenuItem_Click(object sender, RoutedEventArgs e)

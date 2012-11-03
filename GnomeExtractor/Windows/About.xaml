@@ -23,18 +23,18 @@
         </StackPanel>
         <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Margin="5">
             <StackPanel Margin="0,0,15,0">
-                <TextBlock Name="discussionTextBlock" Text="{Resx Discussion}" />
                 <TextBlock Name="projectTextBlock" Text="{Resx Project}" />
+                <TextBlock Name="discussionTextBlock" Text="{Resx Discussion}" />
             </StackPanel>
             <StackPanel Name="stPanelSbout" >
                 <TextBlock>
-                    <Hyperlink Name="discussionLink" NavigateUri="{Resx DiscussionLink}" RequestNavigate="discussionLink_RequestNavigate" >
-                        <TextBlock Text="{Resx DiscussionLink}" />
+                    <Hyperlink Name="projectLink" NavigateUri="{Resx ProjectLink}" RequestNavigate="projectLink_RequestNavigate">
+                        <TextBlock Name="projectLinkTextBlock" Text="{Resx ProjectLink}" />
                     </Hyperlink>
                 </TextBlock>
                 <TextBlock>
-                    <Hyperlink Name="projectLink" NavigateUri="{Resx ProjectLink}" RequestNavigate="projectLink_RequestNavigate">
-                        <TextBlock Name="projectLinkTextBlock" Text="{Resx ProjectLink}" />
+                    <Hyperlink Name="discussionLink" NavigateUri="{Resx DiscussionLink}" RequestNavigate="discussionLink_RequestNavigate" >
+                        <TextBlock Text="{Resx DiscussionLink}" />
                     </Hyperlink>
                 </TextBlock>
             </StackPanel>
