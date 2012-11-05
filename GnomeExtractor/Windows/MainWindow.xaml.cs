@@ -34,9 +34,6 @@ using System.Diagnostics;
 
 namespace GnomeExtractor
 {
-    /// <summary>
-    /// Логика взаимодействия для MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         bool isCheatsOn;
@@ -61,6 +58,7 @@ namespace GnomeExtractor
         public MainWindow()
         {
             // При первом запуске выставляем культуру установленную в компе, при последующих - предыдущую
+            // First run changing localization same like in computer
             if (Settings.Default.ProgramLanguage == "")
             {
                 string lang = "en-US";
@@ -84,6 +82,7 @@ namespace GnomeExtractor
             UpdateLanguageMenus();
 
             // Загружаем настроечки с прошлого запуска
+            // Loading settings
             this.WindowState = Settings.Default.LastRunWindowState;
             this.Left = Settings.Default.LastRunLocation.X;
             this.Top = Settings.Default.LastRunLocation.Y;
@@ -123,6 +122,7 @@ namespace GnomeExtractor
             Settings.Default.Save();
 
             // Отправляем сейвы обратно, затираем их в локальной папке
+            // Move savefiles in /worlds forder
             if (gnomanEmpire != null) gnomanEmpire = null;
             DirectoryInfo dir = new DirectoryInfo(appStartupPath);
             FileInfo[] fi = dir.GetFiles("*.sav");
@@ -166,7 +166,7 @@ namespace GnomeExtractor
                     {
                         case 0:
                             {
-                                DataRow[] dataRows = dataSetTables.Tables["Professions"].Select(); //DataRow[] и DataTable привязаны друг к другу
+                                DataRow[] dataRows = dataSetTables.Tables["Professions"].Select();
                                 for (int row = 0; row < dataRows.Length; row++)
                                     for (int col = 0; col < StaticValues.SkillNamesProfessions1.Length + StaticValues.SkillNamesProfessions2.Length; col++)
                                         dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
@@ -174,7 +174,7 @@ namespace GnomeExtractor
                             }
                         case 1:
                             {
-                                DataRow[] dataRows = dataSetTables.Tables["Combat"].Select(); //DataRow[] и DataTable привязаны друг к другу
+                                DataRow[] dataRows = dataSetTables.Tables["Combat"].Select();
                                 for (int row = 0; row < dataRows.Length; row++)
                                     for (int col = 0; col < StaticValues.SkillNamesCombat.Length; col++)
                                         dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
@@ -182,7 +182,7 @@ namespace GnomeExtractor
                             }
                         case 2:
                             {
-                                DataRow[] dataRows = dataSetTables.Tables["Attributes"].Select(); //DataRow[] и DataTable привязаны друг к другу
+                                DataRow[] dataRows = dataSetTables.Tables["Attributes"].Select();
                                 for (int row = 0; row < dataRows.Length; row++)
                                     for (int col = 0; col < StaticValues.AttributeNames.Length; col++)
                                         dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
@@ -230,6 +230,7 @@ namespace GnomeExtractor
         {
             var tempIndex = tabControl.SelectedIndex;
             // Устанавливаем свойства столбцов через жопу
+            // Setting up properties of columns through the ass
             tabControl.SelectedIndex = 0;
             dataGridProfessions.DataContext = dataSetTables.Tables["Professions"].DefaultView;
             dataGridProfessions.UpdateLayout();
@@ -260,6 +261,7 @@ namespace GnomeExtractor
             tabControl.SelectedIndex = tempIndex;
 
             // Мутим datacontext'ы для привязки статистики
+            // Datacontext's for statistics
             mapStatistics = new MapStatistics(gnomanEmpire);
             mineralsGrid.DataContext = mapStatistics;
             worldNameStat.DataContext = gnomanEmpire.World.AIDirector.PlayerFaction.Name;
@@ -287,6 +289,7 @@ namespace GnomeExtractor
             dataSetTables.Tables.Add(new DataTable("Attributes"));
 
             // Начальные столбцы
+            // First columns
             for (int i = 0; i < StaticValues.FirstColumnNames.Length; i++)
             {
                 dataSetTables.Tables["Professions"].Columns.Add(StaticValues.FirstColumnNames[i]);
@@ -299,6 +302,7 @@ namespace GnomeExtractor
             //dataSetTables.Tables[2].PrimaryKey = new DataColumn[] { dataSetTables.Tables[2].Columns["Name"] };
 
             // Заполняем имена скиллов и атрибутов
+            // Fill the skill & attribute names
             foreach (string name in StaticValues.SkillNamesProfessions1)
                 dataSetTables.Tables["Professions"].Columns.Add(name, typeof(int));
             foreach (string name in StaticValues.SkillNamesProfessions2)
@@ -309,6 +313,7 @@ namespace GnomeExtractor
                 dataSetTables.Tables["Attributes"].Columns.Add(name, typeof(int));
 
             // Перебор гномов на карте
+            // Looking for gnomes at the map
             var rowIndex = 0;
             for (int level = 0; level < gnomanEmpire.Map.Levels.Length; level++)
                 for (int row = 0; row < gnomanEmpire.Map.Levels[0].Length; row++)
@@ -319,11 +324,13 @@ namespace GnomeExtractor
                                 var gnome = gnomanEmpire.Map.Levels[level][row][col].Characters[num];
 
                                 // Создаем строки
+                                // Creating rows
                                 DataRow tmpRowProf = dataSetTables.Tables["Professions"].NewRow();
                                 DataRow tmpRowComb = dataSetTables.Tables["Combat"].NewRow();
                                 DataRow tmpRowAttr = dataSetTables.Tables["Attributes"].NewRow();
 
                                 // Преобразование AllowedSkills в двоичный вид
+                                // Make AllowedSkills as binary
                                 for (int alowedSkillsIndex = 0; alowedSkillsIndex < 2; alowedSkillsIndex++)
                                 {
                                     var temp = Convert.ToString(gnome.Mind.Profession.AllowedSkills.AllowedSkills[alowedSkillsIndex], 2);
@@ -331,6 +338,7 @@ namespace GnomeExtractor
                                     char[] arr = temp.ToCharArray();
                                     Array.Reverse(arr);
                                     // заполняем нулями недостающие разряды
+                                    // Fill '0' empty digit
                                     List<char> tempchars = new List<char>(arr);
                                     for (int indxxx = 0; indxxx < StaticValues.SkillsProfessions1.Length - arr.Length; indxxx++)
                                         tempchars.Add('0');
@@ -339,6 +347,7 @@ namespace GnomeExtractor
                                 }
 
                                 // Заполняем начальные элементы строк
+                                // Fill the first row elements
                                 tmpRowProf[0] = tmpRowComb[0] = tmpRowAttr[0] = level;
                                 tmpRowProf[1] = tmpRowComb[1] = tmpRowAttr[1] = row;
                                 tmpRowProf[2] = tmpRowComb[2] = tmpRowAttr[2] = col;
@@ -347,6 +356,7 @@ namespace GnomeExtractor
                                 tmpRowProf[7] = tmpRowComb[7] = tmpRowAttr[7] = gnome.Name();
 
                                 //заполняем навыки
+                                //Fill the skills
                                 for (int j = 0; j < StaticValues.SkillsProfessions1.Length; j++)
                                     tmpRowProf[j + StaticValues.FirstColumnNames.Length] = gnome.SkillLevel(StaticValues.SkillsProfessions1[j]);
                                 for (int j = 0; j < StaticValues.SkillsProfessions2.Length; j++)
@@ -358,7 +368,8 @@ namespace GnomeExtractor
                                 for (int j = 0; j < StaticValues.Attributes.Length; j++)
                                     tmpRowAttr[j + StaticValues.FirstColumnNames.Length] = gnome.AttributeLevel(StaticValues.Attributes[j]) * 100;
 
-                                // Добавляем полученные строки
+                                // Добавляем полученные строки в таблицу
+                                // Adding rows to table
                                 dataSetTables.Tables["Professions"].Rows.Add(tmpRowProf);
                                 dataSetTables.Tables["Combat"].Rows.Add(tmpRowComb);
                                 dataSetTables.Tables["Attributes"].Rows.Add(tmpRowAttr);
@@ -375,6 +386,7 @@ namespace GnomeExtractor
             if ((bool)saveDlg.ShowDialog())
             {
                 // Делаем бэкап
+                // making backupfile
                 File.Copy(filePath, saveDlg.FileName, true);
 
                 fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = false;
@@ -417,6 +429,7 @@ namespace GnomeExtractor
                 gnome.SetName(gnomeName);
 
                 // Мутим гному новую профу
+                // Creating new profession. Construction "new Profession(string)" is required for working
                 if (gnome.Mind.Profession.Title != "prof #" + gnomeName)
                 {
                     gnome.Mind.Profession = new Profession("prof #" + gnomeName);
@@ -691,6 +704,7 @@ namespace GnomeExtractor
             var value = (e.EditingElement as TextBox).Text;
             
             // Проверяем является ли выделенная ячейка именем
+            // Checking if cell is name
             if (e.Column.DisplayIndex == StaticValues.FirstColumnNames.Length - 1)
             {
                 if (value.Length > 24)

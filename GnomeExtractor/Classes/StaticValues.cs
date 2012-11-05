@@ -9,9 +9,9 @@ namespace GnomeExtractor
 {
     public static class StaticValues
     {
-        const int skillsFightingFirstIndex = 29; // Индекс первого вхождения боевых скиллов
-        const int skillsFightingFirstCount = 10; // Количество боевых скиллов в первом вхождении
-        const int skillsProfessionFirstCount = 29; // Кол-во первого блока скиллов-профессий
+        const int skillsFightingFirstIndex = 29; // Индекс первого вхождения боевых скиллов             // Index of first element of fight skills
+        const int skillsFightingFirstCount = 10; // Количество боевых скиллов в первом вхождении        // Count of fight skills in first block
+        const int skillsProfessionFirstCount = 29; // Кол-во первого блока скиллов-профессий            // Count of profession-skills in first block
         static string[] firstColumnNames;
         static string[] skillsProfessionNames1;
         static string[] skillsProfessionNames2;
@@ -28,6 +28,7 @@ namespace GnomeExtractor
         public static void Initialize()
         {
             //Создаем тру список скиллов
+            //Making arrays of skills
             var skillsNamesTemp = new ArrayList(Enum.GetNames(typeof(CharacterSkillType)));
             var skillsTemp = new ArrayList(Enum.GetValues(typeof(CharacterSkillType)));
             var attributeNamesTemp = new ArrayList(Enum.GetNames(typeof(CharacterAttributeType)));
@@ -38,6 +39,7 @@ namespace GnomeExtractor
             skillsTemp.RemoveAt(30); // LaborEnd
             skillsTemp.RemoveAt(0);  // LaborStart
             // заменять удаление скилла, на присваивание корректного имени. не терять очередность, потому что при удалении элементы сдвигаются.
+            // replase removeing skills assigment good name. dont forget about sequence, it is very important
             skillsNamesTemp.RemoveAt(44);
             skillsNamesTemp.RemoveAt(39);
             skillsNamesTemp[31] = "Fighting"; //NaturalAttack
@@ -48,6 +50,7 @@ namespace GnomeExtractor
             attributesTemp.RemoveAt(5);
 
             // массивы скиллов
+            // skill arrays
             skillsFighting = (CharacterSkillType[])skillsTemp.GetRange(skillsFightingFirstIndex, skillsFightingFirstCount).ToArray(typeof(CharacterSkillType));
             skillsTemp.RemoveRange(skillsFightingFirstIndex, skillsFightingFirstCount);
             skillsProfession1 = (CharacterSkillType[])skillsTemp.GetRange(0, skillsProfessionFirstCount).ToArray(typeof(CharacterSkillType));
@@ -55,6 +58,7 @@ namespace GnomeExtractor
             skillsProfession2 = (CharacterSkillType[])skillsTemp.ToArray(typeof(CharacterSkillType));
 
             // массивы имен скиллов
+            // skill name arrays
             skillsFightingNames = (string[])skillsNamesTemp.GetRange(skillsFightingFirstIndex, skillsFightingFirstCount).ToArray(typeof(string));
             skillsNamesTemp.RemoveRange(skillsFightingFirstIndex, skillsFightingFirstCount);
             skillsProfessionNames1 = (string[])skillsNamesTemp.GetRange(0, skillsProfessionFirstCount).ToArray(typeof(string));
@@ -62,10 +66,12 @@ namespace GnomeExtractor
             skillsProfessionNames2 = (string[])skillsNamesTemp.ToArray(typeof(string));
 
             // Аттрибуты
+            // attribute arrays
             attributes = (CharacterAttributeType[])attributesTemp.ToArray(typeof(CharacterAttributeType));
             attributeNames = (string[])attributeNamesTemp.ToArray(typeof(string));
 
             // Первичные столбцы
+            // first columns
             firstColumnNames = new string[] { "X", "Y", "Z", "Num", "AllowedSkills1", "AllowedSkills2", "RealIndex", "Name" };
         }
 

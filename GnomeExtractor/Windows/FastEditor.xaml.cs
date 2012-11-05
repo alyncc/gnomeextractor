@@ -21,9 +21,6 @@ using System.Globalization;
 
 namespace GnomeExtractor
 {
-    /// <summary>
-    /// Логика взаимодействия для FastEditor.xaml
-    /// </summary>
     public partial class FastEditor : Window
     {
         bool isOkClicked;
