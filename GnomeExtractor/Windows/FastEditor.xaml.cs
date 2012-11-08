@@ -11,7 +11,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using GnomeExtractor.Properties;
 using System.Resources;
 using System.Reflection;
 using Infralution.Localization.Wpf;
@@ -27,16 +26,18 @@ namespace GnomeExtractor
         bool isFixedMode;
         ResourceManager resourceManager;
         int value;
+        Settings settings = new Settings();
 
         public FastEditor()
         {
+            settings.ReadXml();
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureManager.UICulture.Name);
             resourceManager = new ResourceManager("GnomeExtractor.Properties.Resources", Assembly.GetExecutingAssembly());
 
             InitializeComponent();
 
-            fixedEditSlider.Value = Settings.Default.FastEditValue;
-            isFixedMode = Settings.Default.FastEditModeIsFixed;
+            fixedEditSlider.Value = settings.Fields.FastEditValue;
+            isFixedMode = settings.Fields.FastEditModeIsFixed;
             ControlStats();
         }
 
@@ -82,8 +83,8 @@ namespace GnomeExtractor
             value = (int)fixedEditSlider.Value;
             
             isOkClicked = true;
-            Settings.Default.FastEditValue = (int)fixedEditSlider.Value;
-            Settings.Default.FastEditModeIsFixed = isFixedMode = (bool)fixedModeRadioButton.IsChecked;
+            settings.Fields.FastEditValue = (int)fixedEditSlider.Value;
+            settings.Fields.FastEditModeIsFixed = isFixedMode = (bool)fixedModeRadioButton.IsChecked;
             Close();
         }
 

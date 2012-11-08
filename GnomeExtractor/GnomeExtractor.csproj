@@ -51,7 +51,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>WpfApplication1.App</StartupObject>
+    <StartupObject>GnomeExtractor.App</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>681B9EF69633CF34EE111C7E15AF2658171502F3</ManifestCertificateThumbprint>
@@ -65,14 +65,16 @@
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
   </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
-  </PropertyGroup>
+  <PropertyGroup />
   <PropertyGroup>
     <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\GX icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Gnomoria, Version=0.8.13.1, Culture=neutral, processorArchitecture=x86">
@@ -122,6 +124,7 @@
     <Compile Include="Classes\BooleanToColorConverter.cs" />
     <Compile Include="Classes\CellFocusableConverter.cs" />
     <Compile Include="Classes\ColumnIndexToWidthConverter.cs" />
+    <Compile Include="Classes\Settings.cs" />
     <Compile Include="Resources\Loc.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -160,18 +163,8 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
     <None Include="Properties\app.manifest" />
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
     <AppDesigner Include="Properties\" />
-    <None Include="Resources\app.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Windows\About.resx">
@@ -231,8 +224,13 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Readme\license.txt" />
-    <Resource Include="Readme\Readme_eng_GnomeExtractor_0_3.txt" />
-    <Resource Include="Readme\Readme_rus_GnomeExtractor_0_3.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Readme\Readme.txt" />
+    <Resource Include="Readme\Прочти меня.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Installer\Multi-Lang Installer.iss" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

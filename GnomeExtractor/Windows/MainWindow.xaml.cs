@@ -22,7 +22,6 @@ using System.IO;
 using System.Collections;
 using Game;
 using GameLibrary;
-using GnomeExtractor.Properties;
 using System.Data.Common;
 using Infralution.Localization.Wpf;
 using System.Threading;
@@ -45,7 +44,8 @@ namespace GnomeExtractor
         string[] latestVersion;
         string filePath;
         string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
-        
+
+        Settings settings = new Settings();
         GnomanEmpire gnomanEmpire;
         BackgroundWorker backgrWorker = new BackgroundWorker();
         BackgroundWorker updater = new BackgroundWorker();
@@ -57,19 +57,22 @@ namespace GnomeExtractor
         #region WindowHandling
         public MainWindow()
         {
+            // Read settings from Xml file
+            settings.ReadXml();
+
             // При первом запуске выставляем культуру установленную в компе, при последующих - предыдущую
             // First run changing localization same like in computer
-            if (Settings.Default.ProgramLanguage == "")
+            if (settings.Fields.ProgramLanguage == "")
             {
                 string lang = "en-US";
                 if (CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "ru")
                     if (File.Exists("ru-RU\\GnomeExtractor.resources.dll")) lang = "ru-RU";
                 
                 CultureManager.UICulture = new CultureInfo(lang);
-                Settings.Default.ProgramLanguage = lang;
+                settings.Fields.ProgramLanguage = lang;
             }
             else
-                CultureManager.UICulture = new CultureInfo(Settings.Default.ProgramLanguage);
+                CultureManager.UICulture = new CultureInfo(settings.Fields.ProgramLanguage);
 
             CultureManager.UICultureChanged += new EventHandler(CultureManager_UICultureChanged);
             resourceManager = new ResourceManager("GnomeExtractor.Resources.Loc", Assembly.GetExecutingAssembly());
@@ -83,15 +86,15 @@ namespace GnomeExtractor
 
             // Загружаем настроечки с прошлого запуска
             // Loading settings
-            this.WindowState = Settings.Default.LastRunWindowState;
-            this.Left = Settings.Default.LastRunLocation.X;
-            this.Top = Settings.Default.LastRunLocation.Y;
-            this.Width = Settings.Default.LastRunSize.Width;
-            this.Height = Settings.Default.LastRunSize.Height;
-            this.isCheatsOn = Settings.Default.LastRunCheatMode;
-            this.isLabelsVertical = Settings.Default.LastRunIsLablesVertical;
-            this.tabControl.SelectedIndex = Settings.Default.TabItemSelected;
-            this.isAutoUpdateEnabled = Settings.Default.IsAutoUpdateEnabled;
+            this.WindowState = settings.Fields.LastRunWindowState;
+            this.Left = settings.Fields.LastRunLocation.X;
+            this.Top = settings.Fields.LastRunLocation.Y;
+            this.Width = settings.Fields.LastRunSize.Width;
+            this.Height = settings.Fields.LastRunSize.Height;
+            this.isCheatsOn = settings.Fields.LastRunCheatMode;
+            this.isLabelsVertical = settings.Fields.LastRunIsLablesVertical;
+            this.tabControl.SelectedIndex = settings.Fields.TabItemSelected;
+            this.isAutoUpdateEnabled = settings.Fields.IsAutoUpdateEnabled;
             
             ControlStates();
 
@@ -105,21 +108,21 @@ namespace GnomeExtractor
 
             StaticValues.Initialize();
 
-            if (Settings.Default.IsAutoUpdateEnabled) CheckingUpdates(false);
+            if (settings.Fields.IsAutoUpdateEnabled) CheckingUpdates(false);
             ControlStates();
         }
             
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (backgrWorker.IsBusy) e.Cancel = true;
-            Settings.Default.LastRunWindowState = this.WindowState;
-            Settings.Default.LastRunLocation = new Point(Left, Top);
-            Settings.Default.LastRunSize = new Size(Width, Height);
-            Settings.Default.LastRunCheatMode = this.isCheatsOn;
-            Settings.Default.LastRunIsLablesVertical = !this.isLabelsVertical;
-            Settings.Default.TabItemSelected = tabControl.SelectedIndex;
-            Settings.Default.IsAutoUpdateEnabled = isAutoUpdateEnabled;
-            Settings.Default.Save();
+            settings.Fields.LastRunWindowState = this.WindowState;
+            settings.Fields.LastRunLocation = new Point(Left, Top);
+            settings.Fields.LastRunSize = new Size(Width, Height);
+            settings.Fields.LastRunCheatMode = this.isCheatsOn;
+            settings.Fields.LastRunIsLablesVertical = !this.isLabelsVertical;
+            settings.Fields.TabItemSelected = tabControl.SelectedIndex;
+            settings.Fields.IsAutoUpdateEnabled = isAutoUpdateEnabled;
+            settings.WriteXml();
 
             // Отправляем сейвы обратно, затираем их в локальной папке
             // Move savefiles in /worlds forder
@@ -470,7 +473,7 @@ namespace GnomeExtractor
             if (File.Exists("ru-RU\\GnomeExtractor.resources.dll"))
             {
                 CultureManager.UICulture = new CultureInfo("ru-RU");
-                Settings.Default.ProgramLanguage = "ru-RU";
+                settings.Fields.ProgramLanguage = "ru-RU";
                 Thread.CurrentThread.CurrentUICulture = new CultureInfo("ru-RU");
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("ru-RU");
             }
@@ -481,7 +484,7 @@ namespace GnomeExtractor
         private void englishMenuItem_Click(object sender, RoutedEventArgs e)
         {
             CultureManager.UICulture = new CultureInfo("en-US");
-            Settings.Default.ProgramLanguage = "en-US";
+            settings.Fields.ProgramLanguage = "en-US";
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
         }

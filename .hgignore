@@ -1,0 +1,7 @@
+syntax: glob
+GnomeExtractor.v11.suo
+GnomeExtractor.suo
+GnomeExtractor/GnomeExtractor.csproj.user
+GnomeExtractor/bin/*
+GnomeExtractor/obj/*
+GnomeExtractor/Installer/Output/*
