@@ -153,6 +153,9 @@
   <data name="Exit" xml:space="preserve">
     <value>_Выход</value>
   </data>
+  <data name="Export" xml:space="preserve">
+    <value>_Экспорт в CSV таблицы</value>
+  </data>
   <data name="FastRedactor" xml:space="preserve">
     <value>_Быстрое редактирование...</value>
   </data>

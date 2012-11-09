@@ -105,13 +105,14 @@ namespace GnomeExtractor
         {
             typeof(GnomanEmpire).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(GnomanEmpire.Instance, null);
             Focus();
+            GnomanEmpire.Instance.AudioManager.MusicVolume = 0;
 
             StaticValues.Initialize();
 
             if (settings.Fields.IsAutoUpdateEnabled) CheckingUpdates(false);
             ControlStates();
         }
-            
+
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             if (backgrWorker.IsBusy) e.Cancel = true;
@@ -382,23 +383,17 @@ namespace GnomeExtractor
 
         private void saveMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog saveDlg = new SaveFileDialog();
-            saveDlg.InitialDirectory = appStartupPath;
-            saveDlg.Filter = "Gnome Extractor Backup Files (*.savebackup)|*.savebackup";
+            var dir = GnomanEmpire.SaveFolderPath("Backup\\");
+            Directory.CreateDirectory(dir);
+            File.Copy(filePath, dir + DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + 
+                                      DateTime.Now.Hour + "_" + DateTime.Now.Minute + "_" + DateTime.Now.Second + "_" + gnomanEmpire.CurrentWorld);
 
-            if ((bool)saveDlg.ShowDialog())
-            {
-                // Делаем бэкап
-                // making backupfile
-                File.Copy(filePath, saveDlg.FileName, true);
+            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = false;
+            progressBarMain.Visibility = System.Windows.Visibility.Visible;
 
-                fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = false;
-                progressBarMain.Visibility = System.Windows.Visibility.Visible;
-
-                backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_SaveGame);
-                backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
-                backgrWorker.RunWorkerAsync();
-            }
+            backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_SaveGame);
+            backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
+            backgrWorker.RunWorkerAsync();
         }
 
         private void backgrWorker_SaveGameCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -548,13 +543,27 @@ namespace GnomeExtractor
             isAutoUpdateEnabled = !isAutoUpdateEnabled;
             ControlStates();
         }
+
+        private void exportMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Directory.CreateDirectory("export\\");
+            foreach (DataTable table in dataSetTables.Tables)
+            {
+                FileStream fs = new FileStream("export\\" + table.TableName.ToLower() + ".csv", FileMode.Create);
+                StreamWriter sw = new StreamWriter(fs);
+                sw.Write(table.ToCSV());
+                sw.Close();
+            }
+        }
         #endregion
 
         #region State handling
         private void ControlStates()
         {
+            cheatsMenuItem.Visibility = (settings.Fields.IsCheatsEnabled) ? Visibility.Visible : Visibility.Collapsed;
+            if (!settings.Fields.IsCheatsEnabled) settings.Fields.LastRunCheatMode = false;
             fastEditMenuItem.IsEnabled = (gnomanEmpire != null && isCheatsOn);
-            saveMenuItem.IsEnabled = (gnomanEmpire != null && !backgrWorker.IsBusy);
+            saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = (gnomanEmpire != null && !backgrWorker.IsBusy);
             openMenuItem.IsEnabled = !(backgrWorker.IsBusy);
             cheatModeMenuItem.IsChecked = isCheatsOn;
             autoUpdatingMenuItem.IsChecked = isAutoUpdateEnabled;

@@ -124,6 +124,7 @@
     <Compile Include="Classes\BooleanToColorConverter.cs" />
     <Compile Include="Classes\CellFocusableConverter.cs" />
     <Compile Include="Classes\ColumnIndexToWidthConverter.cs" />
+    <Compile Include="Classes\Extensions.cs" />
     <Compile Include="Classes\Settings.cs" />
     <Compile Include="Resources\Loc.Designer.cs">
       <AutoGen>True</AutoGen>

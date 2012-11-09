@@ -5,7 +5,7 @@ using System.Windows;
 
 namespace GnomeExtractor
 {
-    class SettingsFields
+    public class SettingsFields
     {
         public string XMLFileName = Environment.CurrentDirectory + "\\settings.xml";
 
@@ -13,15 +13,16 @@ namespace GnomeExtractor
         public bool LastRunIsLablesVertical = true;
         public bool FastEditModeIsFixed = true;
         public bool IsAutoUpdateEnabled = true;
+        public bool IsCheatsEnabled = false;
         public int FastEditValue = 30;
         public int TabItemSelected = 0;
-        public string ProgramLanguage;
+        public string ProgramLanguage = "";
         public WindowState LastRunWindowState = WindowState.Normal;
         public Point LastRunLocation = new Point(0, 0);
         public Size LastRunSize = new Size(1000, 500);
     }
 
-    class Settings
+    public class Settings
     {
         public SettingsFields Fields;
 
