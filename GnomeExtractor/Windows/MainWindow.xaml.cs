@@ -40,7 +40,7 @@ namespace GnomeExtractor
         bool isAutoUpdateEnabled;
         bool isUpdateFailed = false;
         bool isUpdatesNeeded = false;
-        int[] version = { 0, 3, 26 };
+        int[] version = { 0, 3, 27 };
         string[] latestVersion;
         string filePath;
         string lastBackupFileName;
@@ -104,7 +104,7 @@ namespace GnomeExtractor
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             typeof(GnomanEmpire).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(GnomanEmpire.Instance, null);
-            GnomanEmpire.Instance.Graphics.ToggleFullScreen();
+            if (GnomanEmpire.Instance.Graphics.IsFullScreen) GnomanEmpire.Instance.Graphics.ToggleFullScreen();
             GnomanEmpire.Instance.AudioManager.MusicVolume = 0;
 
             StaticValues.Initialize();

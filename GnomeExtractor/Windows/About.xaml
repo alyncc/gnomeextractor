@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
         <Image Grid.Column="0" Grid.Row="0" Source="../Resources/GX icon.ico" Margin="5" Stretch="None" Cursor="Hand" MouseDown="Image_MouseDown"  />
         <StackPanel Grid.Column="1" Grid.Row="0" Margin="5">
-            <TextBlock Text="Gnome Extractor 0.3 build 26" />
+            <TextBlock Text="Gnome Extractor 0.3 build 27" />
             <TextBlock Text="Copyright © 2012 Waz" />
             <TextBlock Text="Copyright © 2012 DanchiZZ" />
         </StackPanel>
