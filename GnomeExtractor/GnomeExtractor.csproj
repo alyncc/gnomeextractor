@@ -85,9 +85,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Debug\gnomorialib.dll</HintPath>
     </Reference>
-    <Reference Include="loclib, Version=3.1.1.0, Culture=neutral, PublicKeyToken=547ccae517a004b5, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\DLLs\loclib.dll</HintPath>
+    <Reference Include="loclib">
+      <HintPath>Classes\loclib.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
