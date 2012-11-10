@@ -1,6 +1,6 @@
-7:49pm 2012/11/1
+8:32am 2012/11/10
 
-GnomeExtractor v0.1
+GnomeExtractor v0.3
 
 Copyright © 2012 Waz 
 Copyright © 2012 DanchiZZ
@@ -58,7 +58,7 @@ Project page: 		http://code.google.com/p/gnomeextractor
 
 ---III. System requirements---
 
-You need the Gnomoria ver. 0.8.17.1. Also other versions may be ok, but we can't guarantee that.
+Working Gnomoria ver. 0.8.18
 
 System requirements are the same as Gnomoria's
 
@@ -70,7 +70,7 @@ Requires the following versions of the .NET Framework::
 
 ---IV. Installation---
 
-Unpack all files into the same folder where Gnomoria.exe is located.
+Install utility into the game install folder where Gnomoria.exe is located.
 
 
 
@@ -85,8 +85,7 @@ Unpack all files into the same folder where Gnomoria.exe is located.
 
 4. Make changes as needed.
 
-5. Save your changes.(When saving, changes are made in the source save game file. You only can choose 
-where to save the backup.
+5. Save your changes.(When saving, changes are made in the source save game file)
 
 
 

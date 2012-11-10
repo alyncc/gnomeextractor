@@ -40,7 +40,7 @@ namespace GnomeExtractor
         bool isAutoUpdateEnabled;
         bool isUpdateFailed = false;
         bool isUpdatesNeeded = false;
-        int[] version = { 0, 3, 22 };
+        int[] version = { 0, 3, 26 };
         string[] latestVersion;
         string filePath;
         string lastBackupFileName;
@@ -78,8 +78,7 @@ namespace GnomeExtractor
             CultureManager.UICultureChanged += new EventHandler(CultureManager_UICultureChanged);
             resourceManager = new ResourceManager("GnomeExtractor.Resources.Loc", Assembly.GetExecutingAssembly());
 
-            if (!File.Exists("loclib.dll")) MessageBox.Show("File loclib.dll not found, please reinstall the program");
-            if (!File.Exists("Gnomoria.exe")) MessageBox.Show("File Gnomoria.exe not found, please install the program in game folder");
+            if (!File.Exists("Gnomoria.exe")) { MessageBox.Show("File Gnomoria.exe not found, please install the program in game folder"); }
 
             InitializeComponent();
 
@@ -105,7 +104,7 @@ namespace GnomeExtractor
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             typeof(GnomanEmpire).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(GnomanEmpire.Instance, null);
-            Focus();
+            GnomanEmpire.Instance.Graphics.ToggleFullScreen();
             GnomanEmpire.Instance.AudioManager.MusicVolume = 0;
 
             StaticValues.Initialize();
