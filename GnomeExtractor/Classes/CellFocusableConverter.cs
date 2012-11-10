@@ -11,7 +11,8 @@ namespace GnomeExtractor
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             var header = value as string;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 1; i++)
+            if (header == "Profession" && StaticValues.TabControlSelectedIndex != 0) return false;
+            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
                 if (StaticValues.FirstColumnNames[i] == header) return false;
             return true;
         }

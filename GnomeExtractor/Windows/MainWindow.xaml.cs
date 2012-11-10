@@ -43,6 +43,7 @@ namespace GnomeExtractor
         int[] version = { 0, 3, 22 };
         string[] latestVersion;
         string filePath;
+        string lastBackupFileName;
         string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
 
         Settings settings = new Settings();
@@ -220,8 +221,7 @@ namespace GnomeExtractor
             openDlg.Filter = "Gnomoria Save Files (world*.sav)|world*.sav";
             if ((bool)openDlg.ShowDialog())
             {
-                fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = false;
-                progressBarMain.Visibility = System.Windows.Visibility.Visible;
+                DisableControlsForBackgroundWorker();
                 filePath = openDlg.FileName;
 
                 backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_LoadGame);
@@ -233,35 +233,49 @@ namespace GnomeExtractor
         private void backgrWorker_LoadGameCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             var tempIndex = tabControl.SelectedIndex;
+
             // Устанавливаем свойства столбцов через жопу
             // Setting up properties of columns through the ass
+
+            // Professions grid
             tabControl.SelectedIndex = 0;
             dataGridProfessions.DataContext = dataSetTables.Tables["Professions"].DefaultView;
             dataGridProfessions.UpdateLayout();
-            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 1; i++)
+            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
+            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
             {
                 dataGridProfessions.Columns[i].IsReadOnly = true;
                 dataGridProfessions.Columns[i].MaxWidth = 0.01;
             }
+            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
+            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 150;
+
+            // Combat grid
             tabControl.SelectedIndex = 1;
             dataGridCombat.DataContext = dataSetTables.Tables["Combat"].DefaultView;
             dataGridCombat.UpdateLayout();
-            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 1; i++)
+            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
+            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
             {
                 dataGridCombat.Columns[i].IsReadOnly = true;
                 dataGridCombat.Columns[i].MaxWidth = 0.01;
             }
+            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
+            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 0.01;
+
+            // Attributes grid
             tabControl.SelectedIndex = 2;
             dataGridAttributes.DataContext = dataSetTables.Tables["Attributes"].DefaultView;
             dataGridAttributes.UpdateLayout();
-            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 1; i++)
+            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
+            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
             {
                 dataGridAttributes.Columns[i].IsReadOnly = true;
                 dataGridAttributes.Columns[i].MaxWidth = 0.01;
             }
+            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
+            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 0.01;
+
             tabControl.SelectedIndex = tempIndex;
 
             // Мутим datacontext'ы для привязки статистики
@@ -270,14 +284,14 @@ namespace GnomeExtractor
             mineralsGrid.DataContext = mapStatistics;
             worldNameStat.DataContext = gnomanEmpire.World.AIDirector.PlayerFaction.Name;
 
-            ControlStates();
             GridState();
-            progressBarMain.Visibility = Visibility.Hidden;
             backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_LoadGame);
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_LoadGameCompleted);
 
             statusBarLabel.Content = resourceManager.GetString("chosenFile") + " " + System.IO.Path.GetFileName(filePath) +
                     " " + resourceManager.GetString("worldName") + " " + gnomanEmpire.World.AIDirector.PlayerFaction.Name;
+
+            ControlStates();
         }
 
         private void backgrWorker_LoadGame(object sender, DoWorkEventArgs e)
@@ -358,6 +372,7 @@ namespace GnomeExtractor
                                 tmpRowProf[3] = tmpRowComb[3] = tmpRowAttr[3] = num;
                                 tmpRowProf[6] = tmpRowComb[6] = tmpRowAttr[6] = rowIndex;
                                 tmpRowProf[7] = tmpRowComb[7] = tmpRowAttr[7] = gnome.Name();
+                                tmpRowProf[8] = tmpRowComb[8] = tmpRowAttr[8] = gnome.Mind.Profession.Title;
 
                                 //заполняем навыки
                                 //Fill the skills
@@ -383,13 +398,7 @@ namespace GnomeExtractor
 
         private void saveMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            var dir = GnomanEmpire.SaveFolderPath("Backup\\");
-            Directory.CreateDirectory(dir);
-            File.Copy(filePath, dir + DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + 
-                                      DateTime.Now.Hour + "_" + DateTime.Now.Minute + "_" + DateTime.Now.Second + "_" + gnomanEmpire.CurrentWorld);
-
-            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = false;
-            progressBarMain.Visibility = System.Windows.Visibility.Visible;
+            DisableControlsForBackgroundWorker();
 
             backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_SaveGame);
             backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
@@ -398,17 +407,23 @@ namespace GnomeExtractor
 
         private void backgrWorker_SaveGameCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            progressBarMain.Visibility = System.Windows.Visibility.Hidden;
             backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_SaveGame);
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
 
-            statusBarLabel.Content = resourceManager.GetString("saveDoneMessage") + " " + gnomanEmpire.CurrentWorld;
+            statusBarLabel.Content = resourceManager.GetString("saveDoneMessage") + " " + gnomanEmpire.CurrentWorld + ", " +
+                                     resourceManager.GetString("backupDoneMessage") + " " + lastBackupFileName;
 
             ControlStates();
         }
 
         private void backgrWorker_SaveGame(object sender, DoWorkEventArgs e)
         {
+            var dir = GnomanEmpire.SaveFolderPath("Backup\\");
+            Directory.CreateDirectory(dir);
+            lastBackupFileName = DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" +
+                                 DateTime.Now.Hour + "_" + DateTime.Now.Minute + "_" + DateTime.Now.Second + "_" + gnomanEmpire.CurrentWorld;
+            File.Copy(filePath, dir + lastBackupFileName);
+
             DataRow[] rowProf = dataSetTables.Tables["Professions"].Select(null, null, DataViewRowState.CurrentRows);
             DataRow[] rowComb = dataSetTables.Tables["Combat"].Select(null, null, DataViewRowState.CurrentRows);
             DataRow[] rowAttr = dataSetTables.Tables["Attributes"].Select(null, null, DataViewRowState.CurrentRows);
@@ -421,16 +436,17 @@ namespace GnomeExtractor
                 int num = Int32.Parse((string)(rowProf[i][3]));
                 var allowedSkills1 = (string)rowProf[i][4];
                 var allowedSkills2 = (string)rowProf[i][5];
-                var gnomeName = (string)rowProf[i][StaticValues.FirstColumnNames.Length - 1];
+                var gnomeName = (string)rowProf[i][StaticValues.FirstColumnNames.Length - 2];
                 var gnome = gnomanEmpire.Map.Levels[x][y][z].Characters[num];
+                var profession = (string)rowProf[i][StaticValues.FirstColumnNames.Length - 1];
 
                 gnome.SetName(gnomeName);
 
                 // Мутим гному новую профу
                 // Creating new profession. Construction "new Profession(string)" is required for working
-                if (gnome.Mind.Profession.Title != "prof #" + gnomeName)
+                if (profession == "Custom")
                 {
-                    gnome.Mind.Profession = new Profession("prof #" + gnomeName);
+                    gnome.Mind.Profession = new Profession("Custom");
                     gnome.Mind.Profession.AllowedSkills.ClearAll();
                 }
 
@@ -438,14 +454,20 @@ namespace GnomeExtractor
                 for (int j = 0; j < StaticValues.SkillsProfessions1.Length; j++)
                 {
                     gnome.SetSkillLevel(StaticValues.SkillsProfessions1[j], (int)rowProf[i][j + StaticValues.FirstColumnNames.Length]);
-                    if (allowedSkills1[j] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions1[j]);
-                    else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions1[j]);
+                    if (profession == "Custom")
+                    {
+                        if (allowedSkills1[j] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions1[j]);
+                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions1[j]);
+                    }
                 }
                 for (int j = 0; j < StaticValues.SkillsProfessions2.Length; j++)
                 {
                     gnome.SetSkillLevel(StaticValues.SkillsProfessions2[j], (int)rowProf[i][j + StaticValues.SkillsProfessions1.Length + StaticValues.FirstColumnNames.Length]);
-                    if (allowedSkills2[j + 8] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions2[j]);
-                    else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions2[j]);
+                    if (profession == "Custom")
+                    {
+                        if (allowedSkills2[j + 8] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions2[j]);
+                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions2[j]);
+                    }
                 }
 
                 for (int j = 0; j < StaticValues.SkillsCombat.Length; j++)
@@ -546,14 +568,33 @@ namespace GnomeExtractor
 
         private void exportMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            Directory.CreateDirectory("export\\");
+            DisableControlsForBackgroundWorker();
+
+            backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_ExportToCSV);
+            backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_ExportToCSVCompleted);
+            backgrWorker.RunWorkerAsync();
+        }
+
+        private void backgrWorker_ExportToCSV(object sender, DoWorkEventArgs e)
+        {
+            Directory.CreateDirectory("Export\\");
             foreach (DataTable table in dataSetTables.Tables)
             {
-                FileStream fs = new FileStream("export\\" + table.TableName.ToLower() + ".csv", FileMode.Create);
+                FileStream fs = new FileStream("Export\\" + table.TableName.ToLower() + ".csv", FileMode.Create);
                 StreamWriter sw = new StreamWriter(fs);
                 sw.Write(table.ToCSV());
                 sw.Close();
             }
+        }
+
+        private void backgrWorker_ExportToCSVCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_ExportToCSV);
+            backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_ExportToCSVCompleted);
+
+            statusBarLabel.Content = resourceManager.GetString("exportDoneMessage");
+
+            ControlStates();
         }
         #endregion
 
@@ -568,6 +609,13 @@ namespace GnomeExtractor
             cheatModeMenuItem.IsChecked = isCheatsOn;
             autoUpdatingMenuItem.IsChecked = isAutoUpdateEnabled;
             progressBarMain.Visibility = (backgrWorker.IsBusy) ? Visibility.Visible : Visibility.Hidden;
+        }
+
+        private void DisableControlsForBackgroundWorker()
+        {
+            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = false;
+            progressBarMain.Visibility = System.Windows.Visibility.Visible;
+
         }
 
         private void GridState()
@@ -640,6 +688,7 @@ namespace GnomeExtractor
                     chars[check] = (str[check] == '1') ? '0' : '1';
                     dataSetTables.Tables["Professions"].Rows[realIndex].BeginEdit();
                     dataSetTables.Tables["Professions"].Rows[realIndex][4] = new String(chars);
+                    dataSetTables.Tables["Professions"].Rows[realIndex][StaticValues.FirstColumnNames.Length - 1] = "Custom";
                     dataSetTables.Tables["Professions"].Rows[realIndex].EndEdit();
                     BindingOperations.GetMultiBindingExpression(cell, DataGridCell.BackgroundProperty).UpdateTarget();
                     return;
@@ -747,5 +796,10 @@ namespace GnomeExtractor
             }
         }
         #endregion
+
+        private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            StaticValues.TabControlSelectedIndex = tabControl.SelectedIndex;
+        }
     }
 }

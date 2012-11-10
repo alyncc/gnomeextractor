@@ -97,6 +97,15 @@ namespace GnomeExtractor.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на backup saved to:.
+        /// </summary>
+        internal static string backupDoneMessage {
+            get {
+                return ResourceManager.GetString("backupDoneMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Blacksmithing.
         /// </summary>
         internal static string Blacksmithing {
@@ -246,6 +255,15 @@ namespace GnomeExtractor.Resources {
         internal static string errorGridEditName {
             get {
                 return ResourceManager.GetString("errorGridEditName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Export tables to CSV completed successfully. Please, check Export folder.
+        /// </summary>
+        internal static string exportDoneMessage {
+            get {
+                return ResourceManager.GetString("exportDoneMessage", resourceCulture);
             }
         }
         

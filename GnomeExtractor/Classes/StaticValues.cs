@@ -12,6 +12,7 @@ namespace GnomeExtractor
         const int skillsFightingFirstIndex = 29; // Индекс первого вхождения боевых скиллов             // Index of first element of fight skills
         const int skillsFightingFirstCount = 10; // Количество боевых скиллов в первом вхождении        // Count of fight skills in first block
         const int skillsProfessionFirstCount = 29; // Кол-во первого блока скиллов-профессий            // Count of profession-skills in first block
+        static int tabControlSelectedIndex;
         static string[] firstColumnNames;
         static string[] skillsProfessionNames1;
         static string[] skillsProfessionNames2;
@@ -72,8 +73,10 @@ namespace GnomeExtractor
 
             // Первичные столбцы
             // first columns
-            firstColumnNames = new string[] { "X", "Y", "Z", "Num", "AllowedSkills1", "AllowedSkills2", "RealIndex", "Name" };
+            firstColumnNames = new string[] { "X", "Y", "Z", "Num", "AllowedSkills1", "AllowedSkills2", "RealIndex", "Name", "Profession" };
         }
+
+        public static int TabControlSelectedIndex { get { return tabControlSelectedIndex; } set { tabControlSelectedIndex = value; } }
 
         public static string[] FirstColumnNames { get { return firstColumnNames; } }
 

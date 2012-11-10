@@ -303,4 +303,10 @@
   <data name="loclibNotFound" xml:space="preserve">
     <value>File loclib.dll not found, please reinstall the program</value>
   </data>
+  <data name="backupDoneMessage" xml:space="preserve">
+    <value>backup saved to:</value>
+  </data>
+  <data name="exportDoneMessage" xml:space="preserve">
+    <value>Export tables to CSV completed successfully. Please, check Export folder</value>
+  </data>
 </root>

@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:GnomeExtractor"
         xmlns:dg="http://schemas.microsoft.com/netfx/2007/xaml/presentation"
-        Title="Gnome Extractor" Height="500" Width="1000" MinHeight="500" MinWidth="1000" Loaded="Window_Loaded" Closing="Window_Closing" Icon="/GnomeExtractor;component/Resources/GX icon.ico">
+        Title="Gnome Extractor" Height="500" Width="1000" MinHeight="500" MinWidth="1000" Loaded="Window_Loaded" Closing="Window_Closing" Icon="/GnomeExtractor;component/Resources/GX icon 16.png">
     <Window.Resources>
         <local:CellBackgroundColorConverter x:Key="CellBackgroundColorConverter" />
         <local:CellFocusableConverter x:Key="CellFocusableConverter" />
@@ -17,7 +17,7 @@
             <Setter Property="RowHeaderWidth" Value="30" />
             <Setter Property="Margin" Value="5" />
             <Setter Property="SelectionMode" Value="Single" />
-            <Setter Property="FrozenColumnCount" Value="8" />
+            <Setter Property="FrozenColumnCount" Value="9" />
             <Setter Property="MaxColumnWidth" Value="45" />
             <Setter Property="CanUserResizeColumns" Value="False" />
             <Setter Property="CanUserResizeRows" Value="False" />
@@ -120,7 +120,7 @@
                 </Grid>
             </StatusBarItem>
         </StatusBar>
-        <TabControl Name="tabControl" Margin="10">
+        <TabControl Name="tabControl" Margin="10" SelectionChanged="tabControl_SelectionChanged">
             <TabItem Name="professionsTabItem" Header="{Resx Professions}">
                 <Grid>
                     <Grid.ColumnDefinitions>
