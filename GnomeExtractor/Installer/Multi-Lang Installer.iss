@@ -58,9 +58,9 @@ Source: ..\bin\Debug\ru-RU\*; DestDir: {app}\ru-RU; Languages: russian; Flags: i
 Source: ..\bin\Debug\loclib.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\Readme\Readme.txt; DestDir: {app}; Languages: english; Flags: ignoreversion isreadme
 Source: ..\Readme\Прочти меня.txt; DestDir: {app}; Languages: russian; Flags: ignoreversion isreadme
-;Source: ..\bin\Debug\settings.xml; DestDir: {app}; Flags: ignoreversion; Components: nocheats
+Source: ..\bin\Debug\settings.xml; DestDir: {app}; Flags: ignoreversion; Components: nocheats
 ; settings+.xml file with IsCheatsEnabled == true
-;Source: ..\bin\Debug\settings+.xml; DestDir: {app}; DestName: settings.xml; Flags: ignoreversion; Components: cheats
+Source: ..\bin\Debug\settings+.xml; DestDir: {app}; DestName: settings.xml; Flags: ignoreversion; Components: cheats
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -74,12 +74,12 @@ Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}; Filen
 Filename: {app}\{#MyAppExeName}; Description: {cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}; Flags: nowait postinstall skipifsilent
 
 [Components]
-;Name: nocheats; Description: {cm:NoCheats}; Flags: exclusive disablenouninstallwarning
-;Name: cheats; Description: {cm:Cheats}; Flags: exclusive disablenouninstallwarning
+Name: nocheats; Description: {cm:NoCheats}; Flags: exclusive disablenouninstallwarning
+Name: cheats; Description: {cm:Cheats}; Flags: exclusive disablenouninstallwarning
 
 [Types]
-;Name: default; Description: {cm:Default}; Languages: 
-;Name: custom; Description: {cm:Custom}; Flags: iscustom
+Name: default; Description: {cm:Default}; Languages: 
+Name: custom; Description: {cm:Custom}; Flags: iscustom
 
 [UninstallDelete]
 Name: {app}\error.log; Type: files

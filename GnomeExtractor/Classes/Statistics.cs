@@ -5,20 +5,25 @@ using System;
 
 namespace GnomeExtractor
 {
-    class MapStatistics
+    class Statistics
     {
+        string worldName;
         MineralStatistic[] minerals = new MineralStatistic[Enum.GetNames(typeof(MineralID)).Length];
 
-        public MapStatistics(GnomanEmpire gnomanEmpire)
+        public Statistics(GnomanEmpire gnomanEmpire)
         {
-            if (gnomanEmpire == null) return;
-
-            int index = 0;
-            foreach (var i in Enum.GetNames(typeof(MineralID)))
+            Globals.logger.Info("Creating statistics...");
+            if (gnomanEmpire == null)
             {
-                minerals[index] = new MineralStatistic((MineralID)Enum.Parse(typeof(MineralID), i));
-                index++;
+                Globals.logger.Error("World is not loaded");
+                return;
             }
+
+            worldName = gnomanEmpire.World.AIDirector.PlayerFaction.Name;
+
+            var names = Enum.GetNames(typeof(MineralID));
+            for (int i = 0; i < names.Length; i++)
+                minerals[i] = new MineralStatistic((MineralID)Enum.Parse(typeof(MineralID), names[i]));
 
             for (var level = 0; level < gnomanEmpire.Map.MapDepth; level++)
                 for (var height = 0; height < gnomanEmpire.Map.MapHeight; height++)
@@ -38,13 +43,18 @@ namespace GnomeExtractor
                             index2++;
                         }
                     }
+
+            Globals.logger.Info("Statistics has been created");
         }
 
         public MineralStatistic[] Minerals
         { get { return minerals; } }
 
+        public string WorldName
+        { get { return worldName; } }
+
         /// <summary>
-        /// Элемент статистики
+        /// Element of statistics
         /// </summary>
         public class MineralStatistic
         {
@@ -55,13 +65,13 @@ namespace GnomeExtractor
             { this.id = id; }
 
             /// <summary>
-            /// Имя минерала
+            /// Returns minerals name
             /// </summary>
             public string Name
             { get { return id.ToString(); } }
 
             /// <summary>
-            /// Количество объектов, найденных на карте
+            /// Returns minerals count
             /// </summary>
             public int Count
             { get { return count; } set { count = value; } }

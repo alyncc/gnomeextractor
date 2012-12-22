@@ -38,10 +38,11 @@ namespace GnomeExtractor
         bool isCheatsOn;
         bool isLabelsVertical;
         bool isAutoUpdateEnabled;
-        bool isUpdateFailed = false;
+        bool isLatestVersion = false;
         bool isUpdatesNeeded = false;
-        int[] version = { 0, 3, 27 };
-        string[] latestVersion;
+        bool isWindowsXP = false;
+        //int[] version = { 0, 3, 27 };
+        Version latestVersion;
         string filePath;
         string lastBackupFileName;
         string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
@@ -50,14 +51,21 @@ namespace GnomeExtractor
         GnomanEmpire gnomanEmpire;
         BackgroundWorker backgrWorker = new BackgroundWorker();
         BackgroundWorker updater = new BackgroundWorker();
+        BackgroundWorker bkgw = new BackgroundWorker();
         OperatingSystem osInfo = Environment.OSVersion;
         ResourceManager resourceManager;
-        MapStatistics mapStatistics;
+        Statistics mapStatistics;
         DataSet dataSetTables = new DataSet();
 
         #region WindowHandling
         public MainWindow()
         {
+            Globals.logger.Info("Gnome Extractor is running...");
+            //Globals.logger.Info("G
+
+            if (osInfo.Version.Major == 5 && osInfo.Version.Minor != 0)
+                isWindowsXP = true;
+
             // Read settings from Xml file
             settings.ReadXml();
 
@@ -67,7 +75,11 @@ namespace GnomeExtractor
             {
                 string lang = "en-US";
                 if (CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "ru")
-                    if (File.Exists("ru-RU\\GnomeExtractor.resources.dll")) lang = "ru-RU";
+                    if (File.Exists("ru-RU\\GnomeExtractor.resources.dll"))
+                    {
+                        lang = "ru-RU";
+                        Globals.logger.Info("Localization ru-RU resource file has been found");
+                    }
                 
                 CultureManager.UICulture = new CultureInfo(lang);
                 settings.Fields.ProgramLanguage = lang;
@@ -75,10 +87,10 @@ namespace GnomeExtractor
             else
                 CultureManager.UICulture = new CultureInfo(settings.Fields.ProgramLanguage);
 
+            Globals.logger.Debug("Language selected: {0}", CultureManager.UICulture.Name);
+
             CultureManager.UICultureChanged += new EventHandler(CultureManager_UICultureChanged);
             resourceManager = new ResourceManager("GnomeExtractor.Resources.Loc", Assembly.GetExecutingAssembly());
-
-            if (!File.Exists("Gnomoria.exe")) { MessageBox.Show("File Gnomoria.exe not found, please install the program in game folder"); }
 
             InitializeComponent();
 
@@ -95,27 +107,31 @@ namespace GnomeExtractor
             this.isLabelsVertical = settings.Fields.LastRunIsLablesVertical;
             this.tabControl.SelectedIndex = settings.Fields.TabItemSelected;
             this.isAutoUpdateEnabled = settings.Fields.IsAutoUpdateEnabled;
-            
-            ControlStates();
 
+            Globals.logger.Debug("Settings have been loaded");
+            Globals.logger.Debug("Game initialization...");
+            typeof(GnomanEmpire).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(GnomanEmpire.Instance, null);
+            if (GnomanEmpire.Instance.Graphics.IsFullScreen) GnomanEmpire.Instance.Graphics.ToggleFullScreen();
+            GnomanEmpire.Instance.AudioManager.MusicVolume = 0;
+            Globals.logger.Debug("Game initialized");
 
+            Globals.Initialize();
+
+            if (settings.Fields.IsAutoUpdateEnabled) CheckingUpdates(false);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            typeof(GnomanEmpire).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(GnomanEmpire.Instance, null);
-            if (GnomanEmpire.Instance.Graphics.IsFullScreen) GnomanEmpire.Instance.Graphics.ToggleFullScreen();
-            GnomanEmpire.Instance.AudioManager.MusicVolume = 0;
-
-            StaticValues.Initialize();
-
-            if (settings.Fields.IsAutoUpdateEnabled) CheckingUpdates(false);
             ControlStates();
+
+            Globals.logger.Info("Running is complete");
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            Globals.logger.Debug("Trying to close program...");
             if (backgrWorker.IsBusy) e.Cancel = true;
+            Globals.logger.Info("Program closes...");
             settings.Fields.LastRunWindowState = this.WindowState;
             settings.Fields.LastRunLocation = new Point(Left, Top);
             settings.Fields.LastRunSize = new Size(Width, Height);
@@ -123,27 +139,37 @@ namespace GnomeExtractor
             settings.Fields.LastRunIsLablesVertical = !this.isLabelsVertical;
             settings.Fields.TabItemSelected = tabControl.SelectedIndex;
             settings.Fields.IsAutoUpdateEnabled = isAutoUpdateEnabled;
+            Globals.logger.Debug("Settings have been saved");
             settings.WriteXml();
+            if (gnomanEmpire != null) gnomanEmpire = null;
 
             // Отправляем сейвы обратно, затираем их в локальной папке
             // Move savefiles in /worlds forder
-            if (gnomanEmpire != null) gnomanEmpire = null;
-            DirectoryInfo dir = new DirectoryInfo(appStartupPath);
-            FileInfo[] fi = dir.GetFiles("*.sav");
-            foreach (FileInfo file in fi)
+            if (isWindowsXP)
             {
-                File.Copy(file.FullName, GnomanEmpire.SaveFolderPath("\\Worlds") + file.Name, true);
-                File.Delete(file.FullName);
+                Globals.logger.Debug("Looking for saves in AppDir...");
+                DirectoryInfo dir = new DirectoryInfo(appStartupPath);
+                FileInfo[] fi = dir.GetFiles("*.sav");
+                foreach (FileInfo file in fi)
+                {
+                    File.Copy(file.FullName, GnomanEmpire.SaveFolderPath("\\Worlds") + file.Name, true);
+                    File.Delete(file.FullName);
+                    Globals.logger.Info("Save file {0} has been moved to the Worlds path", file.Name);
+                }
+                Globals.logger.Debug("All save files has been moved");
             }
+
+            Globals.logger.Info("Program is closed");
         }
         #endregion
 
         #region ButtonClickHandlers
         private void aboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("About button has been clicked");
             About about = new About();
             about.Owner = this;
-            about.ShowDialog();
+            about.Show();
         }
 
         private void fastEditMenuItem_Click(object sender, RoutedEventArgs e)
@@ -154,72 +180,69 @@ namespace GnomeExtractor
 
             if (fastEditor.IsOkClicked)
             {
-                int tempIndex, tempCount;
+                Globals.logger.Trace("FastEditor OK button has been clicked");
+
+                int from, to;
                 if (fastEditor.isAllTablesCheckBox.IsChecked == true)
                 {
-                    tempCount = tabControl.Items.Count;
-                    tempIndex = 0;
+                    to = tabControl.Items.Count;
+                    from = 0;
                 }
                 else
                 {
-                    tempIndex = tabControl.SelectedIndex;
-                    tempCount = tabControl.SelectedIndex + 1;
+                    from = tabControl.SelectedIndex;
+                    to = tabControl.SelectedIndex + 1;
                 }
-                for (tempIndex = 0; tempIndex < tempCount; tempIndex++)
-                    switch (tempIndex)
-                    {
-                        case 0:
-                            {
-                                DataRow[] dataRows = dataSetTables.Tables["Professions"].Select();
-                                for (int row = 0; row < dataRows.Length; row++)
-                                    for (int col = 0; col < StaticValues.SkillNamesProfessions1.Length + StaticValues.SkillNamesProfessions2.Length; col++)
-                                        dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
-                                break;
-                            }
-                        case 1:
-                            {
-                                DataRow[] dataRows = dataSetTables.Tables["Combat"].Select();
-                                for (int row = 0; row < dataRows.Length; row++)
-                                    for (int col = 0; col < StaticValues.SkillNamesCombat.Length; col++)
-                                        dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
-                                break;
-                            }
-                        case 2:
-                            {
-                                DataRow[] dataRows = dataSetTables.Tables["Attributes"].Select();
-                                for (int row = 0; row < dataRows.Length; row++)
-                                    for (int col = 0; col < StaticValues.AttributeNames.Length; col++)
-                                        dataRows[row][col + StaticValues.FirstColumnNames.Length] = fastEditor.Value;
-                                break;
-                            }
-                        default:
-                            break;
-                    }
+                Globals.logger.Trace("Changing values in tabs from {0} to {1}", from, to - 1);
+
+                for (; from < to; from++)
+                {
+                    DataRow[] dataRows = dataSetTables.Tables[from].Select();
+                    for (int row = 0; row < dataRows.Length; row++)
+                        for (int col = Globals.FirstColumnNames.Length; col < dataRows[row].ItemArray.Length; col++)
+                            dataRows[row][col] = fastEditor.Value;
+                    Globals.logger.Debug("{0} table has been changed", dataSetTables.Tables[from].TableName);
+                }
             }
         }
 
         private void openMenuItem_Click(object sender, RoutedEventArgs e)
         {
-
+            Globals.logger.Debug("Open button has been clicked");
             OpenFileDialog openDlg = new OpenFileDialog();
-            if (osInfo.Version.Major == 5 && osInfo.Version.Minor != 0)
+
+            if (isWindowsXP)
             {
+                Globals.logger.Info("Copying save files to AppPath...");
                 openDlg.InitialDirectory = appStartupPath;
                 DirectoryInfo dir = new DirectoryInfo(GnomanEmpire.SaveFolderPath("Worlds"));
                 FileInfo[] fi = dir.GetFiles("*.sav");
                 foreach (FileInfo file in fi)
+                {
+                    Globals.logger.Debug("Save file{0} have been temporary copied to Program directory", file.Name);
                     File.Copy(file.FullName, appStartupPath + "\\" + file.Name, true);
-                if (!File.Exists("fixed7z.dll")) File.Copy("7z.dll", "fixed7z.dll");
+
+                }
+                if (!File.Exists("fixed7z.dll"))
+                {
+                    File.Copy("7z.dll", "fixed7z.dll");
+                    Globals.logger.Debug("Fixed 7z.dll has been created");
+                }
                 SevenZip.SevenZipExtractor.SetLibraryPath("fixed7z.dll");
             }
             else
             {
-                openDlg.InitialDirectory = GnomanEmpire.SaveFolderPath("Worlds\\");
                 SevenZip.SevenZipExtractor.SetLibraryPath("7z.dll");
+                openDlg.InitialDirectory = System.IO.Path.GetFullPath(GnomanEmpire.SaveFolderPath("Worlds\\"));
             }
-            openDlg.Filter = "Gnomoria Save Files (world*.sav)|world*.sav";
-            if ((bool)openDlg.ShowDialog())
+
+            openDlg.Filter = "Gnomoria Save Files (*.sav)|*.sav";
+
+            Globals.logger.Debug("Open file dialog creating...");
+            if (openDlg.ShowDialog() == true)
             {
+                Globals.logger.Debug("Open file dialog has been closed");
+
                 DisableControlsForBackgroundWorker();
                 filePath = openDlg.FileName;
 
@@ -231,57 +254,34 @@ namespace GnomeExtractor
 
         private void backgrWorker_LoadGameCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            // Initializing and configuring DataGrids
+            // Инициализация и настройка DataGrid'ов
             var tempIndex = tabControl.SelectedIndex;
+            var names = new string[] { "dataGridProfessions", "dataGridCombat", "dataGridAttributes" };
 
-            // Устанавливаем свойства столбцов через жопу
-            // Setting up properties of columns through the ass
-
-            // Professions grid
-            tabControl.SelectedIndex = 0;
-            dataGridProfessions.DataContext = dataSetTables.Tables["Professions"].DefaultView;
-            dataGridProfessions.UpdateLayout();
-            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
+            for (int tableIndex = 0; tableIndex < dataSetTables.Tables.Count; tableIndex++)
             {
-                dataGridProfessions.Columns[i].IsReadOnly = true;
-                dataGridProfessions.Columns[i].MaxWidth = 0.01;
-            }
-            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
-            dataGridProfessions.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 150;
+                tabControl.SelectedIndex = tableIndex;
+                var dataGrid = FindName(names[tableIndex]) as DataGrid;
+                dataGrid.DataContext = dataSetTables.Tables[tableIndex].DefaultView;
+                dataGrid.UpdateLayout();
 
-            // Combat grid
-            tabControl.SelectedIndex = 1;
-            dataGridCombat.DataContext = dataSetTables.Tables["Combat"].DefaultView;
-            dataGridCombat.UpdateLayout();
-            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
-            {
-                dataGridCombat.Columns[i].IsReadOnly = true;
-                dataGridCombat.Columns[i].MaxWidth = 0.01;
+                for (int i = 0; i < Globals.FirstColumnNames.Length - 2; i++)
+                {
+                    dataGrid.Columns[i].IsReadOnly = true;
+                    dataGrid.Columns[i].MaxWidth = 0.01;
+                }
+                dataGrid.Columns[Globals.FirstColumnNames.Length - 1].MaxWidth = (tableIndex == 1 || tableIndex == 2) ? 0.01 : 150;
+                dataGrid.Columns[Globals.FirstColumnNames.Length - 1].IsReadOnly = true;
+                dataGrid.Columns[Globals.FirstColumnNames.Length - 2].MaxWidth = 150;
             }
-            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
-            dataGridCombat.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 0.01;
-
-            // Attributes grid
-            tabControl.SelectedIndex = 2;
-            dataGridAttributes.DataContext = dataSetTables.Tables["Attributes"].DefaultView;
-            dataGridAttributes.UpdateLayout();
-            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 2].MaxWidth = 150;
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length - 2; i++)
-            {
-                dataGridAttributes.Columns[i].IsReadOnly = true;
-                dataGridAttributes.Columns[i].MaxWidth = 0.01;
-            }
-            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 1].IsReadOnly = true;
-            dataGridAttributes.Columns[StaticValues.FirstColumnNames.Length - 1].MaxWidth = 0.01;
 
             tabControl.SelectedIndex = tempIndex;
 
             // Мутим datacontext'ы для привязки статистики
             // Datacontext's for statistics
-            mapStatistics = new MapStatistics(gnomanEmpire);
-            mineralsGrid.DataContext = mapStatistics;
-            worldNameStat.DataContext = gnomanEmpire.World.AIDirector.PlayerFaction.Name;
+            mapStatistics = new Statistics(gnomanEmpire);
+            wrapPanelStatistics.DataContext = mapStatistics;
 
             GridState();
             backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_LoadGame);
@@ -290,11 +290,15 @@ namespace GnomeExtractor
             statusBarLabel.Content = resourceManager.GetString("chosenFile") + " " + System.IO.Path.GetFileName(filePath) +
                     " " + resourceManager.GetString("worldName") + " " + gnomanEmpire.World.AIDirector.PlayerFaction.Name;
 
+            Globals.logger.Info("World initialization complete");
             ControlStates();
         }
 
         private void backgrWorker_LoadGame(object sender, DoWorkEventArgs e)
         {
+            Globals.logger.Info("World initialization...");
+            Globals.logger.Info("Loading {0} save file...", e.Argument);
+
             GnomanEmpire.Instance.LoadGame((string)e.Argument);
 
             gnomanEmpire = GnomanEmpire.Instance;
@@ -307,12 +311,15 @@ namespace GnomeExtractor
 
             // Начальные столбцы
             // First columns
-            for (int i = 0; i < StaticValues.FirstColumnNames.Length; i++)
+            for (int i = 0; i < Globals.FirstColumnNames.Length; i++)
             {
-                dataSetTables.Tables["Professions"].Columns.Add(StaticValues.FirstColumnNames[i]);
-                dataSetTables.Tables["Combat"].Columns.Add(StaticValues.FirstColumnNames[i]);
-                dataSetTables.Tables["Attributes"].Columns.Add(StaticValues.FirstColumnNames[i]);
+                dataSetTables.Tables["Professions"].Columns.Add(Globals.FirstColumnNames[i]);
+                dataSetTables.Tables["Combat"].Columns.Add(Globals.FirstColumnNames[i]);
+                dataSetTables.Tables["Attributes"].Columns.Add(Globals.FirstColumnNames[i]);
             }
+            //for (int i = 0; i < 2; i++)
+            //    for (int j = 0; j < Globals.FirstColumnNames.Length; j++)
+            //        dataSetTables.Tables[i].Columns.Add(Globals.FirstColumnNames[j]);
 
             //dataSetTables.Tables[0].PrimaryKey = new DataColumn[] { dataSetTables.Tables[0].Columns["Name"] };
             //dataSetTables.Tables[1].PrimaryKey = new DataColumn[] { dataSetTables.Tables[1].Columns["Name"] };
@@ -320,13 +327,13 @@ namespace GnomeExtractor
 
             // Заполняем имена скиллов и атрибутов
             // Fill the skill & attribute names
-            foreach (string name in StaticValues.SkillNamesProfessions1)
+            foreach (string name in Globals.SkillNamesProfessions1)
                 dataSetTables.Tables["Professions"].Columns.Add(name, typeof(int));
-            foreach (string name in StaticValues.SkillNamesProfessions2)
+            foreach (string name in Globals.SkillNamesProfessions2)
                 dataSetTables.Tables["Professions"].Columns.Add(name, typeof(int));
-            foreach (string name in StaticValues.SkillNamesCombat)
+            foreach (string name in Globals.SkillNamesCombat)
                 dataSetTables.Tables["Combat"].Columns.Add(name, typeof(int));
-            foreach (string name in StaticValues.AttributeNames)
+            foreach (string name in Globals.AttributeNames)
                 dataSetTables.Tables["Attributes"].Columns.Add(name, typeof(int));
 
             // Перебор гномов на карте
@@ -357,7 +364,7 @@ namespace GnomeExtractor
                                     // заполняем нулями недостающие разряды
                                     // Fill '0' empty digit
                                     List<char> tempchars = new List<char>(arr);
-                                    for (int indxxx = 0; indxxx < StaticValues.SkillsProfessions1.Length - arr.Length; indxxx++)
+                                    for (int indxxx = 0; indxxx < Globals.SkillsProfessions1.Length - arr.Length; indxxx++)
                                         tempchars.Add('0');
                                     var allowedSkills = new string(tempchars.ToArray());
                                     tmpRowProf[4 + alowedSkillsIndex] = tmpRowComb[4 + alowedSkillsIndex] = tmpRowAttr[4 + alowedSkillsIndex] = allowedSkills;
@@ -375,28 +382,30 @@ namespace GnomeExtractor
 
                                 //заполняем навыки
                                 //Fill the skills
-                                for (int j = 0; j < StaticValues.SkillsProfessions1.Length; j++)
-                                    tmpRowProf[j + StaticValues.FirstColumnNames.Length] = gnome.SkillLevel(StaticValues.SkillsProfessions1[j]);
-                                for (int j = 0; j < StaticValues.SkillsProfessions2.Length; j++)
-                                    tmpRowProf[j + StaticValues.SkillsProfessions1.Length + StaticValues.FirstColumnNames.Length] = gnome.SkillLevel(StaticValues.SkillsProfessions2[j]);
+                                for (int j = 0; j < Globals.SkillsProfessions1.Length; j++)
+                                    tmpRowProf[j + Globals.FirstColumnNames.Length] = gnome.SkillLevel(Globals.SkillsProfessions1[j]);
+                                for (int j = 0; j < Globals.SkillsProfessions2.Length; j++)
+                                    tmpRowProf[j + Globals.SkillsProfessions1.Length + Globals.FirstColumnNames.Length] = gnome.SkillLevel(Globals.SkillsProfessions2[j]);
 
-                                for (int j = 0; j < StaticValues.SkillsCombat.Length; j++)
-                                    tmpRowComb[j + StaticValues.FirstColumnNames.Length] = gnome.SkillLevel(StaticValues.SkillsCombat[j]);
+                                for (int j = 0; j < Globals.SkillsCombat.Length; j++)
+                                    tmpRowComb[j + Globals.FirstColumnNames.Length] = gnome.SkillLevel(Globals.SkillsCombat[j]);
 
-                                for (int j = 0; j < StaticValues.Attributes.Length; j++)
-                                    tmpRowAttr[j + StaticValues.FirstColumnNames.Length] = gnome.AttributeLevel(StaticValues.Attributes[j]) * 100;
+                                for (int j = 0; j < Globals.Attributes.Length; j++)
+                                    tmpRowAttr[j + Globals.FirstColumnNames.Length] = gnome.AttributeLevel(Globals.Attributes[j]) * 100;
 
                                 // Добавляем полученные строки в таблицу
                                 // Adding rows to table
                                 dataSetTables.Tables["Professions"].Rows.Add(tmpRowProf);
                                 dataSetTables.Tables["Combat"].Rows.Add(tmpRowComb);
                                 dataSetTables.Tables["Attributes"].Rows.Add(tmpRowAttr);
+                                Globals.logger.Debug("Gnome {0} has been read", gnome.Name());
                                 rowIndex++;
                             }
         }
 
         private void saveMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Save button has been clicked");
             DisableControlsForBackgroundWorker();
 
             backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_SaveGame);
@@ -412,16 +421,20 @@ namespace GnomeExtractor
             statusBarLabel.Content = resourceManager.GetString("saveDoneMessage") + " " + gnomanEmpire.CurrentWorld + ", " +
                                      resourceManager.GetString("backupDoneMessage") + " " + lastBackupFileName;
 
+            Globals.logger.Info("Save complete");
             ControlStates();
         }
 
         private void backgrWorker_SaveGame(object sender, DoWorkEventArgs e)
         {
+            Globals.logger.Info("World saving...");
+
             var dir = GnomanEmpire.SaveFolderPath("Backup\\");
             Directory.CreateDirectory(dir);
             lastBackupFileName = DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" +
                                  DateTime.Now.Hour + "_" + DateTime.Now.Minute + "_" + DateTime.Now.Second + "_" + gnomanEmpire.CurrentWorld;
-            File.Copy(filePath, dir + lastBackupFileName);
+            File.Copy(filePath, dir + lastBackupFileName, true);
+            Globals.logger.Info("Backup file created at" + dir + lastBackupFileName);
 
             DataRow[] rowProf = dataSetTables.Tables["Professions"].Select(null, null, DataViewRowState.CurrentRows);
             DataRow[] rowComb = dataSetTables.Tables["Combat"].Select(null, null, DataViewRowState.CurrentRows);
@@ -435,9 +448,9 @@ namespace GnomeExtractor
                 int num = Int32.Parse((string)(rowProf[i][3]));
                 var allowedSkills1 = (string)rowProf[i][4];
                 var allowedSkills2 = (string)rowProf[i][5];
-                var gnomeName = (string)rowProf[i][StaticValues.FirstColumnNames.Length - 2];
+                var gnomeName = (string)rowProf[i][Globals.FirstColumnNames.Length - 2];
                 var gnome = gnomanEmpire.Map.Levels[x][y][z].Characters[num];
-                var profession = (string)rowProf[i][StaticValues.FirstColumnNames.Length - 1];
+                var profession = (string)rowProf[i][Globals.FirstColumnNames.Length - 1];
 
                 gnome.SetName(gnomeName);
 
@@ -450,30 +463,32 @@ namespace GnomeExtractor
                 }
 
                 //tmpRowProf[j + StaticValues.FirstColumnNames.Length] = 
-                for (int j = 0; j < StaticValues.SkillsProfessions1.Length; j++)
+                for (int j = 0; j < Globals.SkillsProfessions1.Length; j++)
                 {
-                    gnome.SetSkillLevel(StaticValues.SkillsProfessions1[j], (int)rowProf[i][j + StaticValues.FirstColumnNames.Length]);
+                    gnome.SetSkillLevel(Globals.SkillsProfessions1[j], (int)rowProf[i][j + Globals.FirstColumnNames.Length]);
                     if (profession == "Custom")
                     {
-                        if (allowedSkills1[j] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions1[j]);
-                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions1[j]);
+                        if (allowedSkills1[j] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(Globals.SkillsProfessions1[j]);
+                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(Globals.SkillsProfessions1[j]);
                     }
                 }
-                for (int j = 0; j < StaticValues.SkillsProfessions2.Length; j++)
+                for (int j = 0; j < Globals.SkillsProfessions2.Length; j++)
                 {
-                    gnome.SetSkillLevel(StaticValues.SkillsProfessions2[j], (int)rowProf[i][j + StaticValues.SkillsProfessions1.Length + StaticValues.FirstColumnNames.Length]);
+                    gnome.SetSkillLevel(Globals.SkillsProfessions2[j], (int)rowProf[i][j + Globals.SkillsProfessions1.Length + Globals.FirstColumnNames.Length]);
                     if (profession == "Custom")
                     {
-                        if (allowedSkills2[j + 8] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(StaticValues.SkillsProfessions2[j]);
-                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(StaticValues.SkillsProfessions2[j]);
+                        if (allowedSkills2[j + 8] == '1') gnome.Mind.Profession.AllowedSkills.AddSkill(Globals.SkillsProfessions2[j]);
+                        else gnome.Mind.Profession.AllowedSkills.RemoveSkill(Globals.SkillsProfessions2[j]);
                     }
                 }
 
-                for (int j = 0; j < StaticValues.SkillsCombat.Length; j++)
-                    gnome.SetSkillLevel(StaticValues.SkillsCombat[j], (int)rowComb[i][j + StaticValues.FirstColumnNames.Length]);
+                for (int j = 0; j < Globals.SkillsCombat.Length; j++)
+                    gnome.SetSkillLevel(Globals.SkillsCombat[j], (int)rowComb[i][j + Globals.FirstColumnNames.Length]);
 
-                for (int j = 0; j < StaticValues.Attributes.Length; j++)
-                    gnome.SetAttributeLevel(StaticValues.Attributes[j], (int)rowAttr[i][j + StaticValues.FirstColumnNames.Length]);
+                for (int j = 0; j < Globals.Attributes.Length; j++)
+                    gnome.SetAttributeLevel(Globals.Attributes[j], (int)rowAttr[i][j + Globals.FirstColumnNames.Length]);
+
+                Globals.logger.Debug("Gnome {0} written", gnome.Name());
             }
 
             gnomanEmpire.SaveGame();
@@ -481,39 +496,59 @@ namespace GnomeExtractor
 
         private void exitMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Exit button clicked");
+
             Close();
         }
 
         private void russianMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Russian language button clicked");
+
             if (File.Exists("ru-RU\\GnomeExtractor.resources.dll"))
             {
                 CultureManager.UICulture = new CultureInfo("ru-RU");
                 settings.Fields.ProgramLanguage = "ru-RU";
                 Thread.CurrentThread.CurrentUICulture = new CultureInfo("ru-RU");
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("ru-RU");
+
+                Globals.logger.Info("Localization changed to Russian");
             }
             else
+            {
                 MessageBox.Show(resourceManager.GetString("localizationNotFound"));
+
+                Globals.logger.Error("Localization file for Russian language is not found");
+            }
         }
 
         private void englishMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("English language button clicked");
+
             CultureManager.UICulture = new CultureInfo("en-US");
             settings.Fields.ProgramLanguage = "en-US";
             Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
+            Globals.logger.Info("Localization changed to English");
         }
 
         private void cheatModeMenuItem_Checked(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Cheat mode button has been clicked");
+
             isCheatsOn = !isCheatsOn;
             ControlStates();
             GridState();
+
+            Globals.logger.Info("Cheat mode {0}", (isCheatsOn) ? "enabled" : "disabled");
         }
 
         private void updatingMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Updating button has been clicked");
+
             CheckingUpdates(true);
         }
 
@@ -529,44 +564,63 @@ namespace GnomeExtractor
         {
             updater.DoWork -= new DoWorkEventHandler(updater_Update);
             updater.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(updater_UpdateCompleted);
-            if (isUpdateFailed) MessageBox.Show(resourceManager.GetString("latestVersion"));
-            if (isUpdatesNeeded)
-                if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + latestVersion[0] + "." + latestVersion[1] + " build " + latestVersion[2] + ", " +
-                    resourceManager.GetString("downloadNewVersion"), resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo))
-                    Process.Start("http://gnomex.tk");
-            isUpdateFailed = false;
+
+            if (isLatestVersion)
+            {
+                if ((bool)e.Result) MessageBox.Show(resourceManager.GetString("latestVersion"));
+                Globals.logger.Info("Latest version is installed");
+            }
+            else if (isUpdatesNeeded)
+            {
+                Globals.logger.Info("Newest version found");
+                if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + latestVersion + ", " +
+                    resourceManager.GetString("downloadNewVersion"), resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo)) Process.Start("http://gnomex.tk");
+            }
+            isLatestVersion = false;
             isUpdatesNeeded = false;
+            Globals.logger.Info("Updating is complete");
             updatingMenuItem.IsEnabled = true;
         }
 
         private void updater_Update(object sender, DoWorkEventArgs e)
         {
+            Globals.logger.Info("Updating is running...");
             WebRequest request = WebRequest.Create(new Uri("http://gnomex.tk/version/current"));
 
             WebResponse response = request.GetResponse();
 
             StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
-            string log = reader.ReadToEnd();
+            latestVersion = new Version(reader.ReadToEnd());
+            Globals.logger.Debug("Latest version is {0}", latestVersion);
             reader.Close();
             response.Close();
 
-            latestVersion = log.Split('.', 'b');
-
-            if ((version[0] == Double.Parse(latestVersion[0]) && version[1] == Double.Parse(latestVersion[1]) && version[2] < Double.Parse(latestVersion[2])) ||
-            (version[0] == Double.Parse(latestVersion[0]) && version[1] < Double.Parse(latestVersion[1])) || (version[0] < Double.Parse(latestVersion[0])))
+            //if ((version[0] == Double.Parse(latestVersion[0]) && version[1] == Double.Parse(latestVersion[1]) && version[2] < Double.Parse(latestVersion[2])) ||
+            //(version[0] == Double.Parse(latestVersion[0]) && version[1] < Double.Parse(latestVersion[1])) || (version[0] < Double.Parse(latestVersion[0])))
+            if (Globals.ProgramVersion.CompareTo(latestVersion) < 0)
                 isUpdatesNeeded = true;
             else
-                if ((bool)e.Argument) isUpdateFailed = true;
+                isLatestVersion = true;
+
+            
+
+            if ((bool)e.Argument) e.Result = true;
+            else e.Result = false;
         }
 
         private void autoUpdatingMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Debug("Autoupdating button button has been clicked");
+
             isAutoUpdateEnabled = !isAutoUpdateEnabled;
+            Globals.logger.Info("Auto updating is {0}", (isAutoUpdateEnabled) ? "enabled" : "disabled");
             ControlStates();
         }
 
         private void exportMenuItem_Click(object sender, RoutedEventArgs e)
         {
+            Globals.logger.Info("Export is running...");
+
             DisableControlsForBackgroundWorker();
 
             backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_ExportToCSV);
@@ -579,10 +633,12 @@ namespace GnomeExtractor
             Directory.CreateDirectory("Export\\");
             foreach (DataTable table in dataSetTables.Tables)
             {
-                FileStream fs = new FileStream("Export\\" + table.TableName.ToLower() + ".csv", FileMode.Create);
+                var path = "Export\\" + table.TableName.ToLower() + ".csv";
+                FileStream fs = new FileStream(path, FileMode.Create);
                 StreamWriter sw = new StreamWriter(fs);
                 sw.Write(table.ToCSV());
                 sw.Close();
+                Globals.logger.Info("File {0} is created", path);
             }
         }
 
@@ -591,6 +647,7 @@ namespace GnomeExtractor
             backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_ExportToCSV);
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_ExportToCSVCompleted);
 
+            Globals.logger.Info("Export is complete");
             statusBarLabel.Content = resourceManager.GetString("exportDoneMessage");
 
             ControlStates();
@@ -614,7 +671,6 @@ namespace GnomeExtractor
         {
             fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = false;
             progressBarMain.Visibility = System.Windows.Visibility.Visible;
-
         }
 
         private void GridState()
@@ -624,15 +680,15 @@ namespace GnomeExtractor
                 var tempIndex = tabControl.SelectedIndex;
                 tabControl.SelectedIndex = 0;
                 dataGridProfessions.UpdateLayout();
-                for (int i = StaticValues.FirstColumnNames.Length; i < dataSetTables.Tables["Professions"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Professions"].Columns.Count; i++)
                     dataGridProfessions.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = 1;
                 dataGridCombat.UpdateLayout();
-                for (int i = StaticValues.FirstColumnNames.Length; i < dataSetTables.Tables["Combat"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Combat"].Columns.Count; i++)
                     dataGridCombat.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = 2;
                 dataGridAttributes.UpdateLayout();
-                for (int i = StaticValues.FirstColumnNames.Length; i < dataSetTables.Tables["Attributes"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Attributes"].Columns.Count; i++)
                     dataGridAttributes.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = tempIndex;
             }
@@ -651,10 +707,12 @@ namespace GnomeExtractor
         }
         #endregion
 
-        #region DataGrids handling
+        #region DataGrids handling (is not logged)
         private void DataGrid_Sorting(object sender, DataGridSortingEventArgs e)
         {
-            if (e.Column.DisplayIndex > StaticValues.FirstColumnNames.Length - 1)
+            if (e.Column.DisplayIndex == Globals.FirstColumnNames.Length - 1) e.Handled = true;
+
+            if (e.Column.DisplayIndex > Globals.FirstColumnNames.Length - 1)
                 e.Column.SortDirection = ListSortDirection.Ascending;
         }
 
@@ -670,7 +728,7 @@ namespace GnomeExtractor
                 var index = 0;
                 var check = -1;
 
-                foreach (var item in StaticValues.SkillNamesProfessions1)
+                foreach (var item in Globals.SkillNamesProfessions1)
                 {
                     if (item == skillName)
                     {
@@ -687,14 +745,14 @@ namespace GnomeExtractor
                     chars[check] = (str[check] == '1') ? '0' : '1';
                     dataSetTables.Tables["Professions"].Rows[realIndex].BeginEdit();
                     dataSetTables.Tables["Professions"].Rows[realIndex][4] = new String(chars);
-                    dataSetTables.Tables["Professions"].Rows[realIndex][StaticValues.FirstColumnNames.Length - 1] = "Custom";
+                    dataSetTables.Tables["Professions"].Rows[realIndex][Globals.FirstColumnNames.Length - 1] = "Custom";
                     dataSetTables.Tables["Professions"].Rows[realIndex].EndEdit();
                     BindingOperations.GetMultiBindingExpression(cell, DataGridCell.BackgroundProperty).UpdateTarget();
                     return;
                 }
 
                 index = 0;
-                foreach (var item in StaticValues.SkillNamesProfessions2)
+                foreach (var item in Globals.SkillNamesProfessions2)
                 {
                     if (item == skillName)
                     {
@@ -735,24 +793,24 @@ namespace GnomeExtractor
         {
             int columnIndex = (sender as DataGridColumnHeader).Column.DisplayIndex;
 
-            if (columnIndex == StaticValues.FirstColumnNames.Length - 1)
+            if (columnIndex == Globals.FirstColumnNames.Length - 1)
                 (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString("Name");
 
             switch (tabControl.SelectedIndex)
             {
                 case 0:
-                    if (columnIndex > StaticValues.FirstColumnNames.Length - 1 && columnIndex < StaticValues.SkillNamesProfessions1.Length + StaticValues.FirstColumnNames.Length)
-                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(StaticValues.SkillNamesProfessions1[columnIndex - StaticValues.FirstColumnNames.Length]);
-                    else if (columnIndex > StaticValues.FirstColumnNames.Length - 1 + StaticValues.SkillNamesProfessions1.Length)
-                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(StaticValues.SkillNamesProfessions2[columnIndex - StaticValues.FirstColumnNames.Length - StaticValues.SkillNamesProfessions1.Length]);
+                    if (columnIndex > Globals.FirstColumnNames.Length - 1 && columnIndex < Globals.SkillNamesProfessions1.Length + Globals.FirstColumnNames.Length)
+                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(Globals.SkillNamesProfessions1[columnIndex - Globals.FirstColumnNames.Length]);
+                    else if (columnIndex > Globals.FirstColumnNames.Length - 1 + Globals.SkillNamesProfessions1.Length)
+                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(Globals.SkillNamesProfessions2[columnIndex - Globals.FirstColumnNames.Length - Globals.SkillNamesProfessions1.Length]);
                     break;
                 case 1:
-                    if (columnIndex > StaticValues.FirstColumnNames.Length - 1)
-                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(StaticValues.SkillNamesCombat[columnIndex - StaticValues.FirstColumnNames.Length]);
+                    if (columnIndex > Globals.FirstColumnNames.Length - 1)
+                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(Globals.SkillNamesCombat[columnIndex - Globals.FirstColumnNames.Length]);
                     break;
                 case 2:
-                    if (columnIndex > StaticValues.FirstColumnNames.Length - 1)
-                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(StaticValues.AttributeNames[columnIndex - StaticValues.FirstColumnNames.Length]);
+                    if (columnIndex > Globals.FirstColumnNames.Length - 1)
+                        (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString(Globals.AttributeNames[columnIndex - Globals.FirstColumnNames.Length]);
                     break;
                 default:
                     break;
@@ -765,7 +823,7 @@ namespace GnomeExtractor
             
             // Проверяем является ли выделенная ячейка именем
             // Checking if cell is name
-            if (e.Column.DisplayIndex == StaticValues.FirstColumnNames.Length - 1)
+            if (e.Column.DisplayIndex == Globals.FirstColumnNames.Length - 1)
             {
                 if (value.Length > 24)
                     value = value.Substring(0, 24);
@@ -776,11 +834,11 @@ namespace GnomeExtractor
                 for (int i = 0; i < 3; i++)
                 {
                     dataSetTables.Tables[i].Rows[realIndex].BeginEdit();
-                    dataSetTables.Tables[i].Rows[realIndex][StaticValues.FirstColumnNames.Length - 1] = value;
+                    dataSetTables.Tables[i].Rows[realIndex][Globals.FirstColumnNames.Length - 1] = value;
                     dataSetTables.Tables[i].Rows[realIndex].EndEdit();
                 }
             }
-            else if (e.Column.DisplayIndex > StaticValues.FirstColumnNames.Length)
+            else if (e.Column.DisplayIndex > Globals.FirstColumnNames.Length)
             {
                 long num;
                 if (Int64.TryParse(value, out num))
@@ -798,7 +856,8 @@ namespace GnomeExtractor
 
         private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            StaticValues.TabControlSelectedIndex = tabControl.SelectedIndex;
+            Globals.TabControlSelectedIndex = tabControl.SelectedIndex;
+            Globals.logger.Trace("TabControl.SelectedIndex is changed to {0}", tabControl.SelectedIndex);
         }
     }
 }

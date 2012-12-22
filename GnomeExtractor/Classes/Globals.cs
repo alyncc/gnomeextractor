@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using GameLibrary;
+using NLog;
 
 namespace GnomeExtractor
 {
-    public static class StaticValues
+    public class Globals
     {
+        public static Logger logger = LogManager.GetLogger("SampleLogger");
+
         const int skillsFightingFirstIndex = 29; // Индекс первого вхождения боевых скиллов             // Index of first element of fight skills
         const int skillsFightingFirstCount = 10; // Количество боевых скиллов в первом вхождении        // Count of fight skills in first block
         const int skillsProfessionFirstCount = 29; // Кол-во первого блока скиллов-профессий            // Count of profession-skills in first block
@@ -22,12 +25,15 @@ namespace GnomeExtractor
         static CharacterSkillType[] skillsProfession2;
         static CharacterSkillType[] skillsFighting;
         static CharacterAttributeType[] attributes;
+        static Version programVersion = new Version("0.3.27");
         
         /// <summary>
-        /// Инициализировать значения вспомогательного класса StaticValues
+        /// Initialize global variables
         /// </summary>
         public static void Initialize()
         {
+            Globals.logger.Debug("Global variables initialization...");
+
             //Создаем тру список скиллов
             //Making arrays of skills
             var skillsNamesTemp = new ArrayList(Enum.GetNames(typeof(CharacterSkillType)));
@@ -47,7 +53,7 @@ namespace GnomeExtractor
             skillsNamesTemp.RemoveAt(30);
             skillsNamesTemp.RemoveAt(0);
 
-            attributeNamesTemp.RemoveAt(5);//count
+            attributeNamesTemp.RemoveAt(5); //count
             attributesTemp.RemoveAt(5);
 
             // массивы скиллов
@@ -74,6 +80,8 @@ namespace GnomeExtractor
             // Первичные столбцы
             // first columns
             firstColumnNames = new string[] { "X", "Y", "Z", "Num", "AllowedSkills1", "AllowedSkills2", "RealIndex", "Name", "Profession" };
+
+            Globals.logger.Debug("Global variables initialized");
         }
 
         public static int TabControlSelectedIndex { get { return tabControlSelectedIndex; } set { tabControlSelectedIndex = value; } }
@@ -95,5 +103,7 @@ namespace GnomeExtractor
         public static CharacterSkillType[] SkillsCombat { get { return skillsFighting; } }
 
         public static CharacterAttributeType[] Attributes { get { return attributes; } }
+
+        public static Version ProgramVersion { get { return programVersion; } }
     }
 }

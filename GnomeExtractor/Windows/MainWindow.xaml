@@ -185,7 +185,7 @@
                     <GroupBox Header="{Resx Attributes}" Margin="5">
                         <DataGrid Grid.Column="0" Name="dataGridAttributes" Sorting="DataGrid_Sorting" CellEditEnding="DataGrid_CellEditEnding"/>
                     </GroupBox>
-                    <WrapPanel Grid.Column="1">
+                    <WrapPanel Grid.Column="1" Name="wrapPanelStatistics" >
                         <GroupBox Header="{Resx World}" Margin="5">
                             <Grid Name="worldGrid" Margin="15,5">
                                 <Grid.ColumnDefinitions>
@@ -197,7 +197,7 @@
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="{Resx WorldName}" Margin="0,0,10,0" />
-                                <TextBlock Name="worldNameStat" Grid.Column="1" Grid.Row="0" Text="{Binding}" />
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding WorldName}" />
                             </Grid>
                         </GroupBox>
                         <GroupBox Header="{Resx Minerals}" Margin="5">

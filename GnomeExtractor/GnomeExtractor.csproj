@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C9D50083-5359-4BE7-9607-17B3637BBE06}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>GnomeExtractor</RootNamespace>
     <AssemblyName>GnomeExtractor</AssemblyName>
@@ -96,6 +96,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_32\Microsoft.Xna.Framework.Graphics\v4.0_4.0.0.0__842cf8be1de50553\Microsoft.Xna.Framework.Graphics.dll</HintPath>
     </Reference>
+    <Reference Include="NLog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.2.0.0.2000\lib\net40\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="SevenZipSharp, Version=0.64.4510.27485, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Debug\SevenZipSharp.dll</HintPath>
@@ -130,7 +133,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Loc.resx</DependentUpon>
     </Compile>
-    <Compile Include="Classes\StaticValues.cs" />
+    <Compile Include="Classes\Globals.cs" />
     <Page Include="Windows\About.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -159,10 +162,17 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\MapStatistics.cs" />
+    <Compile Include="Classes\Statistics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <AppDesigner Include="Properties\" />
   </ItemGroup>
@@ -223,7 +233,7 @@
     <Resource Include="Resources\GX icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Readme\license.txt" />
+    <Resource Include="Readme\License.txt" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Readme\Readme.txt" />
@@ -233,6 +243,7 @@
     <Content Include="Installer\Multi-Lang Installer.iss" />
     <Resource Include="Resources\GX icon 16.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

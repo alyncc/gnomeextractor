@@ -30,6 +30,8 @@ namespace GnomeExtractor
 
         public FastEditor()
         {
+            Globals.logger.Debug("Creating FastEditor.xaml window...");
+
             settings.ReadXml();
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureManager.UICulture.Name);
             resourceManager = new ResourceManager("GnomeExtractor.Properties.Resources", Assembly.GetExecutingAssembly());
@@ -99,6 +101,11 @@ namespace GnomeExtractor
             if (!Int32.TryParse((sender as TextBox).Text, out temp)) fastEditorTextBox.Text = "5";
             else if (temp < 5) fastEditorTextBox.Text = "5";
             fastEditorTextBox.GetBindingExpression(TextBox.TextProperty).UpdateSource();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            Globals.logger.Debug("FastEditor.xaml window is closed");
         }
     }
 }

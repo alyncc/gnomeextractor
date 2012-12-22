@@ -7,7 +7,7 @@ namespace GnomeExtractor
 {
     public class SettingsFields
     {
-        public string XMLFileName = Environment.CurrentDirectory + "\\settings.xml";
+        //public string XMLFileName = "settings.xml"; //Environment.CurrentDirectory + "\\settings.xml";
 
         public bool LastRunCheatMode = false;
         public bool LastRunIsLablesVertical = true;
@@ -34,21 +34,27 @@ namespace GnomeExtractor
         public void WriteXml()
         {
             XmlSerializer ser = new XmlSerializer(typeof(SettingsFields));
-            TextWriter writer = new StreamWriter(Fields.XMLFileName);
+            Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor");
+            TextWriter writer = new StreamWriter(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor//settings.xml");
             ser.Serialize(writer, Fields);
             writer.Close();
+
+            Globals.logger.Debug("Settings.xml has been written");
         }
 
         public void ReadXml()
         {
-            if (File.Exists(Fields.XMLFileName))
+            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor//settings.xml"))
             {
                 XmlSerializer ser = new XmlSerializer(typeof(SettingsFields));
-                TextReader reader = new StreamReader(Fields.XMLFileName);
+                TextReader reader = new StreamReader(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor//settings.xml");
                 Fields = ser.Deserialize(reader) as SettingsFields;
                 reader.Close();
+
+                Globals.logger.Debug("Settings.xml has been loaded");
             }
-            else { }
+            else
+                Globals.logger.Error("Settings.xml not found");
         }
     }
 }

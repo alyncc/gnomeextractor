@@ -21,7 +21,7 @@ namespace GnomeExtractor
             var index = 0;
             //var check = -1;
 
-            foreach (var item in StaticValues.SkillNamesProfessions1)
+            foreach (var item in Globals.SkillNamesProfessions1)
             {
                 if (item == header)
                 {
@@ -33,7 +33,7 @@ namespace GnomeExtractor
             }
 
             index = 0;
-            foreach (var item in StaticValues.SkillNamesProfessions2)
+            foreach (var item in Globals.SkillNamesProfessions2)
             {
                 if (item == header)
                 {
