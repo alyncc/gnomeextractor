@@ -178,6 +178,15 @@ namespace GnomeExtractor.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Connection error.
+        /// </summary>
+        internal static string connectionError {
+            get {
+                return ResourceManager.GetString("connectionError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Construction.
         /// </summary>
         internal static string Construction {
@@ -498,6 +507,15 @@ namespace GnomeExtractor.Resources {
         internal static string Pottery {
             get {
                 return ResourceManager.GetString("Pottery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Профессия.
+        /// </summary>
+        internal static string Profession {
+            get {
+                return ResourceManager.GetString("Profession", resourceCulture);
             }
         }
         

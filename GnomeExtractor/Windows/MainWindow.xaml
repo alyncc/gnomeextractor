@@ -52,6 +52,22 @@
             <Setter Property="Foreground" Value="Black" />
             <Setter Property="Focusable" Value="{Binding Converter={StaticResource CellFocusableConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}"/>
             <EventSetter Event="PreviewMouseDown" Handler="DataGridCell_PreviewMouseDown" />
+            <!--<Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate DataType="{Binding Converter={StaticResource CellTemplateConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}" />
+                </Setter.Value>
+            </Setter>-->
+            <!--<Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate DataType="TextBox">
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>-->
+            <!--<Style.Triggers>
+                <Trigger Property="Header" Value="Profession">
+                    
+                </Trigger>
+            </Style.Triggers>-->
         </Style>
         <Style TargetType="DataGridRowHeader">
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="DataGridRowHeader_PreviewMouseLeftButtonDown" />

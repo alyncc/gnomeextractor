@@ -1,35 +1,27 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Reflection;
+using System.Resources;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Data;
-using System.Reflection;
-using System.ComponentModel;
-using System.Globalization;
-using System.Resources;
-using Microsoft.Win32;
-using System.IO;
-using System.Collections;
 using Game;
 using GameLibrary;
-using System.Data.Common;
 using Infralution.Localization.Wpf;
-using System.Threading;
-using System.Windows.Threading;
-using System.Windows.Controls.Primitives;
-using System.Windows.Media.TextFormatting;
-using System.Net;
-using System.Diagnostics;
+using Microsoft.Win32;
 
 namespace GnomeExtractor
 {
@@ -41,11 +33,11 @@ namespace GnomeExtractor
         bool isLatestVersion = false;
         bool isUpdatesNeeded = false;
         bool isWindowsXP = false;
-        //int[] version = { 0, 3, 27 };
         Version latestVersion;
         string filePath;
         string lastBackupFileName;
         string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
+        string[] dataGridNames = new string[] { "dataGridProfessions", "dataGridCombat", "dataGridAttributes" };
 
         Settings settings = new Settings();
         GnomanEmpire gnomanEmpire;
@@ -257,12 +249,10 @@ namespace GnomeExtractor
             // Initializing and configuring DataGrids
             // Инициализация и настройка DataGrid'ов
             var tempIndex = tabControl.SelectedIndex;
-            var names = new string[] { "dataGridProfessions", "dataGridCombat", "dataGridAttributes" };
-
             for (int tableIndex = 0; tableIndex < dataSetTables.Tables.Count; tableIndex++)
             {
                 tabControl.SelectedIndex = tableIndex;
-                var dataGrid = FindName(names[tableIndex]) as DataGrid;
+                var dataGrid = FindName(dataGridNames[tableIndex]) as DataGrid;
                 dataGrid.DataContext = dataSetTables.Tables[tableIndex].DefaultView;
                 dataGrid.UpdateLayout();
 
@@ -271,9 +261,14 @@ namespace GnomeExtractor
                     dataGrid.Columns[i].IsReadOnly = true;
                     dataGrid.Columns[i].MaxWidth = 0.01;
                 }
+                dataGrid.Columns[Globals.FirstColumnNames.Length - 2].MaxWidth = 150;
+
+                DataGridComboBoxColumn comboBoxColumn = new DataGridComboBoxColumn();
+                comboBoxColumn.Header = "Profession";
+                dataGrid.Columns[Globals.FirstColumnNames.Length - 1] = comboBoxColumn;
                 dataGrid.Columns[Globals.FirstColumnNames.Length - 1].MaxWidth = (tableIndex == 1 || tableIndex == 2) ? 0.01 : 150;
                 dataGrid.Columns[Globals.FirstColumnNames.Length - 1].IsReadOnly = true;
-                dataGrid.Columns[Globals.FirstColumnNames.Length - 2].MaxWidth = 150;
+                MessageBox.Show(dataGrid.Columns[Globals.FirstColumnNames.Length - 1].MaxWidth.ToString());
             }
 
             tabControl.SelectedIndex = tempIndex;
@@ -305,17 +300,13 @@ namespace GnomeExtractor
 
             dataSetTables.Tables.Clear();
 
-            dataSetTables.Tables.Add(new DataTable("Professions"));
-            dataSetTables.Tables.Add(new DataTable("Combat"));
-            dataSetTables.Tables.Add(new DataTable("Attributes"));
-
             // Начальные столбцы
             // First columns
-            for (int i = 0; i < Globals.FirstColumnNames.Length; i++)
+            for (int i = 0; i < dataGridNames.Length; i++)
             {
-                dataSetTables.Tables["Professions"].Columns.Add(Globals.FirstColumnNames[i]);
-                dataSetTables.Tables["Combat"].Columns.Add(Globals.FirstColumnNames[i]);
-                dataSetTables.Tables["Attributes"].Columns.Add(Globals.FirstColumnNames[i]);
+                dataSetTables.Tables.Add(new DataTable(dataGridNames[i]));
+                for (int j = 0; j < Globals.FirstColumnNames.Length; j++)
+                    dataSetTables.Tables[dataGridNames[i]].Columns.Add(Globals.FirstColumnNames[j]);
             }
             //for (int i = 0; i < 2; i++)
             //    for (int j = 0; j < Globals.FirstColumnNames.Length; j++)
@@ -328,13 +319,13 @@ namespace GnomeExtractor
             // Заполняем имена скиллов и атрибутов
             // Fill the skill & attribute names
             foreach (string name in Globals.SkillNamesProfessions1)
-                dataSetTables.Tables["Professions"].Columns.Add(name, typeof(int));
+                dataSetTables.Tables[dataGridNames[0]].Columns.Add(name, typeof(int));
             foreach (string name in Globals.SkillNamesProfessions2)
-                dataSetTables.Tables["Professions"].Columns.Add(name, typeof(int));
+                dataSetTables.Tables[dataGridNames[0]].Columns.Add(name, typeof(int));
             foreach (string name in Globals.SkillNamesCombat)
-                dataSetTables.Tables["Combat"].Columns.Add(name, typeof(int));
+                dataSetTables.Tables[dataGridNames[1]].Columns.Add(name, typeof(int));
             foreach (string name in Globals.AttributeNames)
-                dataSetTables.Tables["Attributes"].Columns.Add(name, typeof(int));
+                dataSetTables.Tables[dataGridNames[2]].Columns.Add(name, typeof(int));
 
             // Перебор гномов на карте
             // Looking for gnomes at the map
@@ -349,9 +340,9 @@ namespace GnomeExtractor
 
                                 // Создаем строки
                                 // Creating rows
-                                DataRow tmpRowProf = dataSetTables.Tables["Professions"].NewRow();
-                                DataRow tmpRowComb = dataSetTables.Tables["Combat"].NewRow();
-                                DataRow tmpRowAttr = dataSetTables.Tables["Attributes"].NewRow();
+                                DataRow tmpRowProf = dataSetTables.Tables[dataGridNames[0]].NewRow();
+                                DataRow tmpRowComb = dataSetTables.Tables[dataGridNames[1]].NewRow();
+                                DataRow tmpRowAttr = dataSetTables.Tables[dataGridNames[2]].NewRow();
 
                                 // Преобразование AllowedSkills в двоичный вид
                                 // Make AllowedSkills as binary
@@ -378,7 +369,8 @@ namespace GnomeExtractor
                                 tmpRowProf[3] = tmpRowComb[3] = tmpRowAttr[3] = num;
                                 tmpRowProf[6] = tmpRowComb[6] = tmpRowAttr[6] = rowIndex;
                                 tmpRowProf[7] = tmpRowComb[7] = tmpRowAttr[7] = gnome.Name();
-                                tmpRowProf[8] = tmpRowComb[8] = tmpRowAttr[8] = gnome.Mind.Profession.Title;
+                                //tmpRowProf[8] = tmpRowComb[8] = tmpRowAttr[8] = gnome.Mind.Profession.Title;
+                                tmpRowProf[8] = tmpRowComb[8] = tmpRowAttr[8] = gnome.Mind.Profession;
 
                                 //заполняем навыки
                                 //Fill the skills
@@ -395,9 +387,9 @@ namespace GnomeExtractor
 
                                 // Добавляем полученные строки в таблицу
                                 // Adding rows to table
-                                dataSetTables.Tables["Professions"].Rows.Add(tmpRowProf);
-                                dataSetTables.Tables["Combat"].Rows.Add(tmpRowComb);
-                                dataSetTables.Tables["Attributes"].Rows.Add(tmpRowAttr);
+                                dataSetTables.Tables[dataGridNames[0]].Rows.Add(tmpRowProf);
+                                dataSetTables.Tables[dataGridNames[1]].Rows.Add(tmpRowComb);
+                                dataSetTables.Tables[dataGridNames[2]].Rows.Add(tmpRowAttr);
                                 Globals.logger.Debug("Gnome {0} has been read", gnome.Name());
                                 rowIndex++;
                             }
@@ -436,9 +428,9 @@ namespace GnomeExtractor
             File.Copy(filePath, dir + lastBackupFileName, true);
             Globals.logger.Info("Backup file created at" + dir + lastBackupFileName);
 
-            DataRow[] rowProf = dataSetTables.Tables["Professions"].Select(null, null, DataViewRowState.CurrentRows);
-            DataRow[] rowComb = dataSetTables.Tables["Combat"].Select(null, null, DataViewRowState.CurrentRows);
-            DataRow[] rowAttr = dataSetTables.Tables["Attributes"].Select(null, null, DataViewRowState.CurrentRows);
+            DataRow[] rowProf = dataSetTables.Tables[dataGridNames[0]].Select(null, null, DataViewRowState.CurrentRows);
+            DataRow[] rowComb = dataSetTables.Tables[dataGridNames[1]].Select(null, null, DataViewRowState.CurrentRows);
+            DataRow[] rowAttr = dataSetTables.Tables[dataGridNames[2]].Select(null, null, DataViewRowState.CurrentRows);
 
             for (int i = 0; i < rowProf.Length; i++)
             {
@@ -573,8 +565,18 @@ namespace GnomeExtractor
             else if (isUpdatesNeeded)
             {
                 Globals.logger.Info("Newest version found");
+                WebRequest request;
+
+                if (Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName.ToLower() == "ru")
+                    request = WebRequest.Create(new Uri("http://gnomex.tk/version/changesru"));
+                else
+                    request = WebRequest.Create(new Uri("http://gnomex.tk/version/changes"));
+                WebResponse response = request.GetResponse();
+                StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
+                var changes = reader.ReadToEnd();
+
                 if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + latestVersion + ", " +
-                    resourceManager.GetString("downloadNewVersion"), resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo)) Process.Start("http://gnomex.tk");
+                    resourceManager.GetString("downloadNewVersion") + "\n\n" + changes, resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo)) Process.Start("http://gnomex.tk");
             }
             isLatestVersion = false;
             isUpdatesNeeded = false;
@@ -586,21 +588,27 @@ namespace GnomeExtractor
         {
             Globals.logger.Info("Updating is running...");
             WebRequest request = WebRequest.Create(new Uri("http://gnomex.tk/version/current"));
+            WebResponse response;
 
-            WebResponse response = request.GetResponse();
+            try
+            {
+                response = request.GetResponse();
 
-            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
-            latestVersion = new Version(reader.ReadToEnd());
-            Globals.logger.Debug("Latest version is {0}", latestVersion);
-            reader.Close();
-            response.Close();
+                StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
+                latestVersion = new Version(reader.ReadToEnd());
+                Globals.logger.Debug("Latest version is {0}", latestVersion);
+                reader.Close();
+                response.Close();
 
-            //if ((version[0] == Double.Parse(latestVersion[0]) && version[1] == Double.Parse(latestVersion[1]) && version[2] < Double.Parse(latestVersion[2])) ||
-            //(version[0] == Double.Parse(latestVersion[0]) && version[1] < Double.Parse(latestVersion[1])) || (version[0] < Double.Parse(latestVersion[0])))
-            if (Globals.ProgramVersion.CompareTo(latestVersion) < 0)
-                isUpdatesNeeded = true;
-            else
-                isLatestVersion = true;
+                if (Globals.ProgramVersion.CompareTo(latestVersion) < 0)
+                    isUpdatesNeeded = true;
+                else
+                    isLatestVersion = true;
+            }
+            catch (WebException)
+            {
+                MessageBox.Show(resourceManager.GetString("connectionError"));
+            }
 
             
 
@@ -680,15 +688,15 @@ namespace GnomeExtractor
                 var tempIndex = tabControl.SelectedIndex;
                 tabControl.SelectedIndex = 0;
                 dataGridProfessions.UpdateLayout();
-                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Professions"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[0]].Columns.Count; i++)
                     dataGridProfessions.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = 1;
                 dataGridCombat.UpdateLayout();
-                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Combat"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[1]].Columns.Count; i++)
                     dataGridCombat.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = 2;
                 dataGridAttributes.UpdateLayout();
-                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables["Attributes"].Columns.Count; i++)
+                for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[2]].Columns.Count; i++)
                     dataGridAttributes.Columns[i].IsReadOnly = !isCheatsOn;
                 tabControl.SelectedIndex = tempIndex;
             }
@@ -740,13 +748,13 @@ namespace GnomeExtractor
 
                 if (check != -1)
                 {
-                    var str = dataSetTables.Tables["Professions"].Rows[realIndex].ItemArray[4] as string;
+                    var str = dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].ItemArray[4] as string;
                     char[] chars = str.ToArray();
                     chars[check] = (str[check] == '1') ? '0' : '1';
-                    dataSetTables.Tables["Professions"].Rows[realIndex].BeginEdit();
-                    dataSetTables.Tables["Professions"].Rows[realIndex][4] = new String(chars);
-                    dataSetTables.Tables["Professions"].Rows[realIndex][Globals.FirstColumnNames.Length - 1] = "Custom";
-                    dataSetTables.Tables["Professions"].Rows[realIndex].EndEdit();
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].BeginEdit();
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex][4] = new String(chars);
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex][Globals.FirstColumnNames.Length - 1] = "Custom";
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].EndEdit();
                     BindingOperations.GetMultiBindingExpression(cell, DataGridCell.BackgroundProperty).UpdateTarget();
                     return;
                 }
@@ -763,12 +771,12 @@ namespace GnomeExtractor
                 }
                 if (check != -1)
                 {
-                    var str = dataSetTables.Tables["Professions"].Rows[realIndex].ItemArray[5] as string;
+                    var str = dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].ItemArray[5] as string;
                     char[] chars = str.ToArray();
                     chars[check + 8] = (str[check + 8] == '1') ? '0' : '1';
-                    dataSetTables.Tables["Professions"].Rows[realIndex].BeginEdit();
-                    dataSetTables.Tables["Professions"].Rows[realIndex][5] = new String(chars);
-                    dataSetTables.Tables["Professions"].Rows[realIndex].EndEdit();
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].BeginEdit();
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex][5] = new String(chars);
+                    dataSetTables.Tables[dataGridNames[0]].Rows[realIndex].EndEdit();
                     BindingOperations.GetMultiBindingExpression(cell, DataGridCell.BackgroundProperty).UpdateTarget();
                     return;
                 }
@@ -784,8 +792,34 @@ namespace GnomeExtractor
             DataGridRowHeader header = sender as DataGridRowHeader;
             if (header != null)
             {
-                //MessageBox.Show("Sorting will be");
-                e.Handled = true;
+                DataGrid dataGrid = FindName(dataGridNames[tabControl.SelectedIndex]) as DataGrid;
+                DataGridRow row = DataGridRow.GetRowContainingElement(sender as DataGridRowHeader);
+
+                // Reading
+                DictionaryEntry[] values = new DictionaryEntry[dataGrid.Columns.Count - Globals.FirstColumnNames.Length];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    values[i].Key = i + Globals.FirstColumnNames.Length;
+                    values[i].Value = Int32.Parse((dataGrid.Columns[i + Globals.FirstColumnNames.Length].GetCellContent(row) as TextBlock).Text);
+                }
+
+                // Sorting
+                for (int i = 0; i < values.Length - 1; i++)
+                    for (int j = i + 1; j < values.Length; j++)
+                        if ((int)values[i].Value < (int)values[j].Value)
+                        {
+                            var temp = values[i];
+                            values[i] = values[j];
+                            values[j] = temp;
+                        }
+
+                // Reordering
+                for (int i = 0; i < values.Length; i++)
+                {
+                    dataGrid.Columns[(int)values[i].Key].DisplayIndex = i + Globals.FirstColumnNames.Length;
+
+                    e.Handled = true;
+                }
             }
         }
 
@@ -793,8 +827,11 @@ namespace GnomeExtractor
         {
             int columnIndex = (sender as DataGridColumnHeader).Column.DisplayIndex;
 
-            if (columnIndex == Globals.FirstColumnNames.Length - 1)
+            if (columnIndex == Globals.FirstColumnNames.Length - 2)
                 (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString("Name");
+
+            if (columnIndex == Globals.FirstColumnNames.Length - 1)
+                (sender as DataGridColumnHeader).ToolTip = resourceManager.GetString("Profession");
 
             switch (tabControl.SelectedIndex)
             {
@@ -819,12 +856,12 @@ namespace GnomeExtractor
 
         private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
-            var value = (e.EditingElement as TextBox).Text;
-            
             // Проверяем является ли выделенная ячейка именем
             // Checking if cell is name
             if (e.Column.DisplayIndex == Globals.FirstColumnNames.Length - 1)
             {
+                var value = (e.EditingElement as ComboBox).SelectedValue.ToString();
+
                 if (value.Length > 24)
                     value = value.Substring(0, 24);
 
@@ -840,6 +877,8 @@ namespace GnomeExtractor
             }
             else if (e.Column.DisplayIndex > Globals.FirstColumnNames.Length)
             {
+                var value = (e.EditingElement as TextBox).Text;
+
                 long num;
                 if (Int64.TryParse(value, out num))
                 {
@@ -859,5 +898,6 @@ namespace GnomeExtractor
             Globals.TabControlSelectedIndex = tabControl.SelectedIndex;
             Globals.logger.Trace("TabControl.SelectedIndex is changed to {0}", tabControl.SelectedIndex);
         }
+
     }
 }
