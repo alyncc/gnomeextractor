@@ -6,21 +6,18 @@
         xmlns:dg="http://schemas.microsoft.com/netfx/2007/xaml/presentation"
         Title="Gnome Extractor" Height="500" Width="1000" MinHeight="500" MinWidth="1000" Loaded="Window_Loaded" Closing="Window_Closing" Icon="/GnomeExtractor;component/Resources/GX icon 16.png">
     <Window.Resources>
-        <local:CellBackgroundColorConverter x:Key="CellBackgroundColorConverter" />
-        <local:CellFocusableConverter x:Key="CellFocusableConverter" />
-        <local:ColumnIndexToWidthConverter x:Key="ColumnIndexToWidthConverter" />
         <Style TargetType="DataGrid">
-            <Setter Property="ItemsSource" Value="{Binding}" />
             <Setter Property="CanUserDeleteRows" Value="False" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="SelectionUnit" Value="Cell" />
             <Setter Property="RowHeaderWidth" Value="30" />
             <Setter Property="Margin" Value="5" />
             <Setter Property="SelectionMode" Value="Single" />
-            <Setter Property="FrozenColumnCount" Value="9" />
+            <Setter Property="FrozenColumnCount" Value="3" />
             <Setter Property="MaxColumnWidth" Value="45" />
             <Setter Property="CanUserResizeColumns" Value="False" />
             <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="CanUserReorderColumns" Value="False" />
         </Style>
         <Style TargetType="DataGridColumnHeader">
             <Setter Property="ToolTip" Value="" />
@@ -40,34 +37,9 @@
             </Setter>
         </Style>
         <Style TargetType="DataGridCell">
-            <Setter Property="Background">
-                <Setter.Value>
-                    <MultiBinding Converter="{StaticResource CellBackgroundColorConverter}" Mode="OneWay">
-                        <Binding Path="Row[4]" />
-                        <Binding Path="Row[5]" />
-                        <Binding RelativeSource="{RelativeSource Self}" Path="Column.Header" />
-                    </MultiBinding>
-                </Setter.Value>
-            </Setter>
             <Setter Property="Foreground" Value="Black" />
-            <Setter Property="Focusable" Value="{Binding Converter={StaticResource CellFocusableConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}"/>
+            <!--<Setter Property="Focusable" Value="{Binding Converter={StaticResource CellFocusableConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}"/>-->
             <EventSetter Event="PreviewMouseDown" Handler="DataGridCell_PreviewMouseDown" />
-            <!--<Setter Property="ContentTemplate">
-                <Setter.Value>
-                    <DataTemplate DataType="{Binding Converter={StaticResource CellTemplateConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}" />
-                </Setter.Value>
-            </Setter>-->
-            <!--<Setter Property="ContentTemplate">
-                <Setter.Value>
-                    <DataTemplate DataType="TextBox">
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>-->
-            <!--<Style.Triggers>
-                <Trigger Property="Header" Value="Profession">
-                    
-                </Trigger>
-            </Style.Triggers>-->
         </Style>
         <Style TargetType="DataGridRowHeader">
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="DataGridRowHeader_PreviewMouseLeftButtonDown" />
@@ -143,24 +115,422 @@
                         <ColumnDefinition MinWidth="500" Width="75*" />
                         <ColumnDefinition MinWidth="200" Width="250"/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox Grid.ColumnSpan="2" Header="{Resx Skills}" Margin="5">
-                        <DataGrid Name="dataGridProfessions" Sorting="DataGrid_Sorting" CellEditEnding="DataGrid_CellEditEnding">
+                    <GroupBox Grid.Column="0" Grid.ColumnSpan="1" Header="{Resx Skills}">
+                        <DataGrid Name="dataGridProfessions" AutoGenerateColumns="False" Sorting="DataGrid_Sorting" 
+                                  CellEditEnding="DataGrid_CellEditEnding" ItemsSource="{Binding Gnomes}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding ID}" MaxWidth="0.01">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style TargetType="DataGridCell">
+                                            <Setter Property="Focusable" Value="False" />
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" MaxWidth="200" />
+                                <DataGridComboBoxColumn x:Name="professionsColumn" Header="Profession" SelectedValueBinding="{Binding Profession.Title}"
+                                                        SelectedValuePath="Title" DisplayMemberPath="Title">
+                                    <DataGridComboBoxColumn.ElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding Path=DataContext.Professions, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+                                            <EventSetter Event="SelectionChanged"  Handler="DataGridProfessionsComboBox_SelectionChanged" />
+                                        </Style>
+                                    </DataGridComboBoxColumn.ElementStyle>
+                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="ItemsSource" Value="{Binding Path=DataContext.Professions, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
+                                        </Style>
+                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                </DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="Mining" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[0].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Masonry" Binding="{Binding LaborSkills[1].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[1].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Stonecarving" Binding="{Binding LaborSkills[2].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[2].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Woodcutting" Binding="{Binding LaborSkills[3].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[3].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Carpentry" Binding="{Binding LaborSkills[4].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[4].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Woodcarving" Binding="{Binding LaborSkills[5].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[5].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Smelting" Binding="{Binding LaborSkills[6].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[6].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Blacksmithing" Binding="{Binding LaborSkills[7].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[7].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Metalworking" Binding="{Binding LaborSkills[8].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[8].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Weapon Crafting" Binding="{Binding LaborSkills[9].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[9].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Armor Crafting" Binding="{Binding LaborSkills[10].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[10].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Gem Cutting" Binding="{Binding LaborSkills[11].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[11].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Jewelry Making" Binding="{Binding LaborSkills[12].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[12].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Weaving" Binding="{Binding LaborSkills[13].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[13].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Tailoring" Binding="{Binding LaborSkills[14].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[14].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Pottery" Binding="{Binding LaborSkills[15].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[15].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Leatherworking" Binding="{Binding LaborSkills[16].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[16].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Tinkering" Binding="{Binding LaborSkills[17].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[17].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Machining" Binding="{Binding LaborSkills[18].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[18].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Engineering" Binding="{Binding LaborSkills[19].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[19].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Mechanic" Binding="{Binding LaborSkills[20].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[20].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Animal Husbandry" Binding="{Binding LaborSkills[21].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[21].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Butchery" Binding="{Binding LaborSkills[22].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[22].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Horticulture" Binding="{Binding LaborSkills[23].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[23].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Farming" Binding="{Binding LaborSkills[24].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[24].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Cooking" Binding="{Binding LaborSkills[25].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[25].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Brewing" Binding="{Binding LaborSkills[26].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[26].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Medic" Binding="{Binding LaborSkills[27].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[27].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Caretaking" Binding="{Binding LaborSkills[28].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[28].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Construction" Binding="{Binding LaborSkills[29].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[29].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Hauling" Binding="{Binding LaborSkills[30].Level, Mode=TwoWay}" >
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding LaborSkills[30].IsAllowed}" Value="True">
+                                                    <Setter Property="Background" Value="GreenYellow" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
-                    <Grid Grid.Column="1" Visibility="Hidden">
+                    <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="45*" />
                             <RowDefinition Height="55*" />
                         </Grid.RowDefinitions>
-                        <GroupBox Grid.Row="0" Header="{Resx Changes}" IsEnabled="False">
+                        <GroupBox Grid.Row="0" Header="{Resx Changes}" IsEnabled="False" Visibility="Hidden">
                             <ListBox Margin="5">
                                 
                             </ListBox>
                         </GroupBox>
-                        <GroupBox Grid.Row="1" Header="{Resx Professions}" IsEnabled="False">
+                        <GroupBox Grid.Row="0" Grid.RowSpan="2" Header="{Resx Professions}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
                                 <Grid Grid.Row="0" >
@@ -169,12 +539,29 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <ComboBox x:Uid="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True" />
-                                    <Button x:Uid="addProfessionButton" Grid.Column="1" Content="Add" ToolTip="Add" Margin="5" />
-                                    <Button x:Uid="removeProfessionButton" Grid.Column="2" Content="Del" ToolTip="Del" Margin="5" />
+                                    <ComboBox Name="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True" 
+                                              DisplayMemberPath="Title" ItemsSource="{Binding Professions}" />
+                                    <Button Name="addProfessionButton" Grid.Column="1" Content="Add" ToolTip="Add" Margin="5" Click="AddProfessionButton_Click" Padding="3" />
+                                    <Button Name="removeProfessionButton" Grid.Column="2" Content="Del" ToolTip="Del" Margin="5" Click="RemoveProfessionButton_Click" Padding="3" />
                                 </Grid>
-                                <ListBox x:Uid="professionsListBox" Grid.Row="1" Margin="5">
-                            
+                                <Grid Grid.Row="1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" Name="gnomesComboBox" Margin="5" DisplayMemberPath="Name"
+                                              ItemsSource="{Binding Path=Gnomes}" />
+                                    <Button Grid.Column="1" Name="readGnomeButton" Content="{Resx ReadGnome}" Margin="5" Click="readGnomeButton_Click" Padding="8,3" />
+                                </Grid>
+                                <ListBox Name="professionsListBox" Grid.Row="2" Margin="5" 
+                                         ItemsSource="{Binding Skills}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Name="CheckBoxZone" Content="{Binding Name}"
+                                                      Tag="{Binding Type}" IsChecked="{Binding IsAllowed}"   
+                                                      Margin="0,5,0,0"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
                         </GroupBox>
@@ -187,18 +574,49 @@
                         <ColumnDefinition MinWidth="250" Width="Auto" />
                         <ColumnDefinition MinWidth="200" Width="500"/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox Grid.Column="0" Header="{Resx Skills}" Margin="5">
-                        <DataGrid Name="dataGridCombat" Sorting="DataGrid_Sorting" CellEditEnding="DataGrid_CellEditEnding"/>
+                    <GroupBox Grid.Column="0" Header="{Resx Skills}">
+                        <DataGrid Name="dataGridCombat" AutoGenerateColumns="False" Sorting="DataGrid_Sorting" 
+                                  CellEditEnding="DataGrid_CellEditEnding" ItemsSource="{Binding Gnomes}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding ID}" MaxWidth="0.01">
+                                    <DataGridTextColumn.CellStyle>
+                                        <Style TargetType="DataGridCell">
+                                            <Setter Property="Focusable" Value="False" />
+                                        </Style>
+                                    </DataGridTextColumn.CellStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" />
+                                <DataGridComboBoxColumn x:Name="squadsColumn" Header="Squad" MaxWidth="0.01"
+                                                        DisplayMemberPath="Title" 
+                                                        SelectedItemBinding="{Binding ElementName=dataGridProfessions, Path=Profession.Title}"
+                                                        SelectedValuePath="{Binding ElementName=dataGridProfessions, Path=Profession.Title}"/>
+                                <DataGridTextColumn Header="Fighting" Binding="{Binding CombatSkills[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Brawling" Binding="{Binding CombatSkills[1].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Sword" Binding="{Binding CombatSkills[2].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Axe" Binding="{Binding CombatSkills[3].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Hammer" Binding="{Binding CombatSkills[4].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Crossbow" Binding="{Binding CombatSkills[8].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Gun" Binding="{Binding CombatSkills[9].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Shield" Binding="{Binding CombatSkills[6].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Dodge" Binding="{Binding CombatSkills[5].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Armor" Binding="{Binding CombatSkills[7].Level, Mode=TwoWay}" />
+                                <!--<DataGridTextColumn Header="Fitness" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Nimbleness" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Curiosity" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Focus" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Charm" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />-->
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </GroupBox>
                 </Grid>
             </TabItem>
             <TabItem Header="{Resx Other}">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" MinWidth="250" />
+                        <!--<ColumnDefinition Width="Auto" MinWidth="250" />-->
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <GroupBox Header="{Resx Attributes}" Margin="5">
+                    <GroupBox Header="{Resx Attributes}" Margin="5" Visibility="Collapsed">
                         <DataGrid Grid.Column="0" Name="dataGridAttributes" Sorting="DataGrid_Sorting" CellEditEnding="DataGrid_CellEditEnding"/>
                     </GroupBox>
                     <WrapPanel Grid.Column="1" Name="wrapPanelStatistics" >

@@ -19,7 +19,7 @@ namespace GnomeExtractor
     {
         public About()
         {
-            Globals.logger.Debug("Creating About.xaml window...");
+            Globals.Logger.Debug("Creating About.xaml window...");
             InitializeComponent();
         }
 
@@ -45,7 +45,7 @@ namespace GnomeExtractor
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            Globals.logger.Debug("About.xaml window is closed");
+            Globals.Logger.Debug("About.xaml window is closed");
         }
     }
 }

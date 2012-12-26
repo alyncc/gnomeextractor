@@ -12,10 +12,10 @@ namespace GnomeExtractor
 
         public Statistics(GnomanEmpire gnomanEmpire)
         {
-            Globals.logger.Info("Creating statistics...");
+            Globals.Logger.Info("Creating statistics...");
             if (gnomanEmpire == null)
             {
-                Globals.logger.Error("World is not loaded");
+                Globals.Logger.Error("World is not loaded");
                 return;
             }
 
@@ -44,7 +44,7 @@ namespace GnomeExtractor
                         }
                     }
 
-            Globals.logger.Info("Statistics has been created");
+            Globals.Logger.Info("Statistics has been created");
         }
 
         public MineralStatistic[] Minerals

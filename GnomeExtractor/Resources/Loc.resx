@@ -141,8 +141,8 @@
   <data name="Butchery" xml:space="preserve">
     <value>Butchery</value>
   </data>
-  <data name="Caretaker" xml:space="preserve">
-    <value>Caretaker</value>
+  <data name="Caretaking" xml:space="preserve">
+    <value>Caretaking</value>
   </data>
   <data name="Carpentry" xml:space="preserve">
     <value>Carpentry</value>
@@ -258,8 +258,8 @@
   <data name="Woodcarving" xml:space="preserve">
     <value>Woodcarving</value>
   </data>
-  <data name="WoodCutting" xml:space="preserve">
-    <value>Wood Cutting</value>
+  <data name="Woodcutting" xml:space="preserve">
+    <value>Woodcutting</value>
   </data>
   <data name="worldName" xml:space="preserve">
     <value>World name:</value>

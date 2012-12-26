@@ -7,8 +7,6 @@ namespace GnomeExtractor
 {
     public class SettingsFields
     {
-        //public string XMLFileName = "settings.xml"; //Environment.CurrentDirectory + "\\settings.xml";
-
         public bool LastRunCheatMode = false;
         public bool LastRunIsLablesVertical = true;
         public bool FastEditModeIsFixed = true;
@@ -39,7 +37,7 @@ namespace GnomeExtractor
             ser.Serialize(writer, Fields);
             writer.Close();
 
-            Globals.logger.Debug("Settings.xml has been written");
+            Globals.Logger.Debug("Settings.xml has been written");
         }
 
         public void ReadXml()
@@ -51,10 +49,10 @@ namespace GnomeExtractor
                 Fields = ser.Deserialize(reader) as SettingsFields;
                 reader.Close();
 
-                Globals.logger.Debug("Settings.xml has been loaded");
+                Globals.Logger.Debug("Settings.xml has been loaded");
             }
             else
-                Globals.logger.Error("Settings.xml not found");
+                Globals.Logger.Error("Settings.xml not found");
         }
     }
 }

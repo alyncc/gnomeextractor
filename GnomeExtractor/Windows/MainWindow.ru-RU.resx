@@ -139,7 +139,7 @@
     <value>Уголь:</value>
   </data>
   <data name="Combat" xml:space="preserve">
-    <value>Боевые</value>
+    <value>Отряды</value>
   </data>
   <data name="Copper" xml:space="preserve">
     <value>Медь:</value>
@@ -197,6 +197,9 @@
   </data>
   <data name="Professions" xml:space="preserve">
     <value>Профессии</value>
+  </data>
+  <data name="ReadGnome" xml:space="preserve">
+    <value>Считать гнома</value>
   </data>
   <data name="Russian" xml:space="preserve">
     <value>_Русский</value>

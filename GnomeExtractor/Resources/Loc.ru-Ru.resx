@@ -141,8 +141,8 @@
   <data name="Butchery" xml:space="preserve">
     <value>Навык мясника</value>
   </data>
-  <data name="Caretaker" xml:space="preserve">
-    <value>Медсестра</value>
+  <data name="Caretaking" xml:space="preserve">
+    <value>Уход за больными</value>
   </data>
   <data name="Carpentry" xml:space="preserve">
     <value>Плотничество</value>
@@ -208,7 +208,7 @@
     <value>Камнеобработка</value>
   </data>
   <data name="Mechanic" xml:space="preserve">
-    <value>Слесарь</value>
+    <value>Механик</value>
   </data>
   <data name="Medic" xml:space="preserve">
     <value>Медик</value>
@@ -258,7 +258,7 @@
   <data name="Woodcarving" xml:space="preserve">
     <value>Резьба по дереву</value>
   </data>
-  <data name="WoodCutting" xml:space="preserve">
+  <data name="Woodcutting" xml:space="preserve">
     <value>Рубка деревьев</value>
   </data>
   <data name="worldName" xml:space="preserve">

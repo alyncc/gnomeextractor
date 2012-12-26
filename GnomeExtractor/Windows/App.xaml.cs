@@ -14,17 +14,17 @@ namespace GnomeExtractor
         protected override void OnStartup(StartupEventArgs e)
         {
             // Collecting information
-            if (File.Exists("Gnomoria.exe")) Globals.logger.Debug("Gnomoria version found: {0}", FileVersionInfo.GetVersionInfo("Gnomoria.exe").FileVersion);
+            if (File.Exists("Gnomoria.exe")) Globals.Logger.Debug("Gnomoria version found: {0}", FileVersionInfo.GetVersionInfo("Gnomoria.exe").FileVersion);
             else
             {
-                Globals.logger.Fatal("Gnomoria.exe is not found");
+                Globals.Logger.Fatal("Gnomoria.exe is not found");
                 MessageBox.Show("Gnomoria.exe is not found, please install program in the game folder");
                 Environment.Exit(0);
             }
-            Globals.logger.Debug("Gnome Extractor version: {0}", Globals.ProgramVersion);
-            Globals.logger.Debug("OS found: {0}", Environment.OSVersion);
-            Globals.logger.Debug("OS found: {0}", (Environment.Is64BitOperatingSystem) ? "64 bit" : "32 bit");
-            Globals.logger.Debug(".Net version found: {0}", Environment.Version);
+            Globals.Logger.Debug("Gnome Extractor version: {0}", Globals.ProgramVersion);
+            Globals.Logger.Debug("OS found: {0}", Environment.OSVersion);
+            Globals.Logger.Debug("OS found: {0}", (Environment.Is64BitOperatingSystem) ? "64 bit" : "32 bit");
+            Globals.Logger.Debug(".Net version found: {0}", Environment.Version);
 
             // hook on error before app really starts
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
@@ -40,7 +40,7 @@ namespace GnomeExtractor
 
         void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Globals.logger.Fatal(e.ExceptionObject.ToString());
+            Globals.Logger.Fatal(e.ExceptionObject.ToString());
             //Process.Start("notepad.exe", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor//output.log");
             if (Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName.ToLower() == "ru")
                 MessageBox.Show("Обнаружена ошибка. Пожалуйста, отправьте содержимое файла output.log в обсуждение группы http://vk.com/gnomoria");

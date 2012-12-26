@@ -142,11 +142,11 @@ namespace GnomeExtractor.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Caretaker.
+        ///   Ищет локализованную строку, похожую на Caretaking.
         /// </summary>
-        internal static string Caretaker {
+        internal static string Caretaking {
             get {
-                return ResourceManager.GetString("Caretaker", resourceCulture);
+                return ResourceManager.GetString("Caretaking", resourceCulture);
             }
         }
         
@@ -637,11 +637,11 @@ namespace GnomeExtractor.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Wood Cutting.
+        ///   Ищет локализованную строку, похожую на Woodcutting.
         /// </summary>
-        internal static string WoodCutting {
+        internal static string Woodcutting {
             get {
-                return ResourceManager.GetString("WoodCutting", resourceCulture);
+                return ResourceManager.GetString("Woodcutting", resourceCulture);
             }
         }
         

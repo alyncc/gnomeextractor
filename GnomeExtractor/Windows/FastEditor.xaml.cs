@@ -30,7 +30,7 @@ namespace GnomeExtractor
 
         public FastEditor()
         {
-            Globals.logger.Debug("Creating FastEditor.xaml window...");
+            Globals.Logger.Debug("Creating FastEditor.xaml window...");
 
             settings.ReadXml();
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureManager.UICulture.Name);
@@ -105,7 +105,7 @@ namespace GnomeExtractor
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            Globals.logger.Debug("FastEditor.xaml window is closed");
+            Globals.Logger.Debug("FastEditor.xaml window is closed");
         }
     }
 }
