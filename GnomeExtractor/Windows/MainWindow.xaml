@@ -542,7 +542,7 @@
                                               DisplayMemberPath="Title" ItemsSource="{Binding Professions}" 
                                               PreviewTextInput="professionsComboBox_PreviewTextInput" 
                                               PreviewDrop="professionsComboBox_PreviewDrop" 
-                                              PreviewKeyDown="professionsComboBox_PreviewKeyDown"/>
+                                              PreviewKeyDown="professionsComboBox_PreviewKeyDown" SelectionChanged="professionsComboBox_SelectionChanged"/>
                                     <Button Name="addProfessionButton" Grid.Column="1" Content="Add" ToolTip="Add" Margin="5" Click="AddProfessionButton_Click" Padding="3" />
                                     <Button Name="removeProfessionButton" Grid.Column="2" Content="Del" ToolTip="Del" Margin="5" Click="RemoveProfessionButton_Click" Padding="3" />
                                 </Grid>

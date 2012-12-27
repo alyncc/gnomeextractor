@@ -804,5 +804,16 @@ namespace GnomeExtractor
             if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) || Keyboard.IsKeyDown(Key.Insert))
                 e.Handled = true;
         }
+
+        private void professionsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var profession = e.AddedItems[0] as Profession;
+            Globals.ViewModel.Skills.Clear();
+            foreach (var skill in SkillDef.AllLaborSkills())
+                Globals.ViewModel.Skills.Add(new SkillEntry(skill, 5, profession.AllowedSkills.IsSkillAllowed(skill)));
+
+            professionsListBox.ItemsSource = null;
+            professionsListBox.ItemsSource = Globals.ViewModel.Skills;
+        }
     }
 }
