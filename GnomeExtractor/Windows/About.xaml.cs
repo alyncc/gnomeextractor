@@ -38,11 +38,6 @@ namespace GnomeExtractor
             System.Diagnostics.Process.Start(projectLinkTextBlock.Text);
         }
 
-        private void Window_Deactivated(object sender, EventArgs e)
-        {
-            Close();
-        }
-
         private void Window_Closed(object sender, EventArgs e)
         {
             Globals.Logger.Debug("About.xaml window is closed");

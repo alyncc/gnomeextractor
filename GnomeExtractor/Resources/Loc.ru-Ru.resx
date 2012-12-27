@@ -315,4 +315,7 @@
   <data name="Profession" xml:space="preserve">
     <value>Профессия</value>
   </data>
+  <data name="professionAlreadyExists" xml:space="preserve">
+    <value>Профессия с таким именем уже существует</value>
+  </data>
 </root>

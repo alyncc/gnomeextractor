@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Gnome Extractor"
-#define MyAppVersion "0.3 build 27"
+#define MyAppVersion "0.4"
 #define MyAppPublisher "DanchiZZ & Waz © Copyright"
 #define MyAppURL "http://gnomex.tk/"
 #define MyAppExeName "GnomeExtractor.exe"
@@ -56,11 +56,14 @@ Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription
 Source: ..\bin\Debug\GnomeExtractor.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\bin\Debug\ru-RU\*; DestDir: {app}\ru-RU; Languages: russian; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ..\bin\Debug\loclib.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\bin\Debug\NLog.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\bin\Debug\NLog.config; DestDir: {app}; Flags: ignoreversion
 Source: ..\Readme\Readme.txt; DestDir: {app}; Languages: english; Flags: ignoreversion isreadme
 Source: ..\Readme\Прочти меня.txt; DestDir: {app}; Languages: russian; Flags: ignoreversion isreadme
-Source: ..\bin\Debug\settings.xml; DestDir: {app}; Flags: ignoreversion; Components: nocheats
-; settings+.xml file with IsCheatsEnabled == true
-Source: ..\bin\Debug\settings+.xml; DestDir: {app}; DestName: settings.xml; Flags: ignoreversion; Components: cheats
+; first settings.xml file with IsCheatsEnabled == true
+Source: ..\bin\Debug\cheats\settings.xml; DestDir: {userappdata}\Gnome Extractor; Flags: ignoreversion; Components: cheats
+; second settings.xml file with IsCheatsEnabled == false
+Source: ..\bin\Debug\settings.xml; DestDir: {userappdata}\Gnome Extractor; Flags: ignoreversion; Components: nocheats
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

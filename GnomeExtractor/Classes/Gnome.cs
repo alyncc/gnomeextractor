@@ -18,23 +18,26 @@ namespace GnomeExtractor
         int position;
         Profession profession;
         int mining;
-        List<Skill> laborSkills = new List<Skill>();
-        List<Skill> combatSkills = new List<Skill>();
+        List<SkillEntry> laborSkills = new List<SkillEntry>();
+        List<SkillEntry> combatSkills = new List<SkillEntry>();
+        List<AttributeEntry> attributes = new List<AttributeEntry>();
 
-        public Gnome(Character gnome, int level, int row, int column, int position, int index)
+        public Gnome(Character gnome, int level, int row, int column, int mapCellPosition, int realIndex)
         {
             this.name = gnome.Name();
-            this.id = index;
+            this.id = realIndex;
             this.level = level;
             this.row = row;
             this.column = column;
-            this.position = position;
+            this.position = mapCellPosition;
             this.profession = gnome.Mind.Profession;
             this.mining = gnome.SkillLevel(CharacterSkillType.Mining);
             foreach (var skill in SkillDef.AllLaborSkills())
-                this.laborSkills.Add(new Skill(skill, gnome.SkillLevel(skill), gnome.Mind.IsSkillAllowed(skill)));
+                this.laborSkills.Add(new SkillEntry(skill, gnome.SkillLevel(skill), gnome.Mind.IsSkillAllowed(skill)));
             foreach (var skill in SkillDef.AllCombatSkills())
-                this.combatSkills.Add(new Skill(skill, gnome.SkillLevel(skill), gnome.Mind.IsSkillAllowed(skill)));
+                this.combatSkills.Add(new SkillEntry(skill, gnome.SkillLevel(skill), gnome.Mind.IsSkillAllowed(skill)));
+            foreach (var attribute in Enum.GetValues(typeof(CharacterAttributeType)))
+                this.attributes.Add(new AttributeEntry((CharacterAttributeType)attribute, gnome.AttributeLevel((CharacterAttributeType)attribute)));
         }
 
         public int Level
@@ -44,7 +47,7 @@ namespace GnomeExtractor
         { get { return this.row; } }
 
         public int Column
-        { get { return this.row; } }
+        { get { return this.column; } }
 
         public int Position
         { get { return this.position; } }
@@ -61,17 +64,28 @@ namespace GnomeExtractor
         public int Mining
         { get { return this.mining; } set { this.mining = value; OnPropertyChanged("Mining"); } }
 
-        public List<Skill> LaborSkills
+        public List<SkillEntry> LaborSkills
         { get { return this.laborSkills; } }
 
-        public List<Skill> CombatSkills
+        public List<SkillEntry> CombatSkills
         { get { return this.combatSkills; } }
+
+        public List<AttributeEntry> Attributes
+        { get { return this.attributes; } }
 
         public void SetAllowedSkills(SkillGroup allowedSkills)
         {
             profession.AllowedSkills = allowedSkills;
             foreach (var skill in laborSkills)
                 skill.IsAllowed = allowedSkills.IsSkillAllowed(skill.Type);
+        }
+
+        public List<SkillEntry> GetClonedSkills()
+        {
+            List<SkillEntry> skills = new List<SkillEntry>();
+            foreach (var skill in laborSkills)
+                skills.Add(new SkillEntry(skill.Type, skill.Level, skill.IsAllowed));
+            return skills;
         }
 
         private void OnPropertyChanged(string propertyName)
@@ -83,26 +97,57 @@ namespace GnomeExtractor
 
     }
 
-    public class Skill : INotifyPropertyChanged
+    /// <summary>
+    /// Gnome attribute entry
+    /// </summary>
+    public class AttributeEntry : INotifyPropertyChanged
+    {
+        float level;
+        string name;
+        CharacterAttributeType type;
+
+        public AttributeEntry(CharacterAttributeType type, float level)
+        {
+            this.level = level;
+            this.name = type.ToString();
+            this.type = type;
+        }
+
+        public float Level
+        { get { return this.level * 100; } set { this.level = value / 100; OnPropertyChanged("Level"); } }
+
+        public string Name
+        { get { return this.name; } set { this.name = value; OnPropertyChanged("Name"); } }
+
+        public CharacterAttributeType Type
+        { get { return this.type; } }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+    }
+
+    /// <summary>
+    /// Labor or combat skill entry
+    /// </summary>
+    public class SkillEntry : INotifyPropertyChanged
     {
         int level;
         string name;
         CharacterSkillType type;
         bool isAllowed;
 
-        public Skill(CharacterSkillType type, int level, bool isAllowed)
+        public SkillEntry(CharacterSkillType type, int level, bool isAllowed)
         {
-            this.name = type.ToString();
             this.level = level;
+            this.name = type.ToString();
             this.type = type;
             this.isAllowed = isAllowed;
         }
-
-        public CharacterSkillType Type
-        { get { return this.type; } }
-
-        public bool IsAllowed
-        { get { return this.isAllowed; } set { this.isAllowed = value; OnPropertyChanged("IsAllowed"); } }
 
         public int Level
         { get { return this.level; } set { this.level = value; OnPropertyChanged("Level"); } }
@@ -110,11 +155,18 @@ namespace GnomeExtractor
         public string Name
         { get { return this.name; } set { this.name = value; OnPropertyChanged("Name"); } }
 
+        public CharacterSkillType Type
+        { get { return this.type; } }
+
+        public bool IsAllowed
+        { get { return this.isAllowed; } set { this.isAllowed = value; OnPropertyChanged("IsAllowed"); } }
+
         private void OnPropertyChanged(string propertyName)
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
+
         public event PropertyChangedEventHandler PropertyChanged;
     }
 }

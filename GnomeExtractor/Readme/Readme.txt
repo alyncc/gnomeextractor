@@ -1,6 +1,6 @@
 8:32am 2012/11/10
 
-GnomeExtractor v0.3
+GnomeExtractor v0.4
 
 Copyright © 2012 Waz 
 Copyright © 2012 DanchiZZ
@@ -58,7 +58,7 @@ Project page: 		http://code.google.com/p/gnomeextractor
 
 ---III. System requirements---
 
-Working Gnomoria ver. 0.8.18
+Working Gnomoria ver. 0.8.24
 
 System requirements are the same as Gnomoria's
 

@@ -13,6 +13,8 @@ namespace GnomeExtractor
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+
             // Collecting information
             if (File.Exists("Gnomoria.exe")) Globals.Logger.Debug("Gnomoria version found: {0}", FileVersionInfo.GetVersionInfo("Gnomoria.exe").FileVersion);
             else
@@ -27,7 +29,7 @@ namespace GnomeExtractor
             Globals.Logger.Debug(".Net version found: {0}", Environment.Version);
 
             // hook on error before app really starts
-            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+            //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
             base.OnStartup(e);
         }
 
@@ -40,6 +42,7 @@ namespace GnomeExtractor
 
         void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            //MessageBox.Show(e.ExceptionObject.ToString());
             Globals.Logger.Fatal(e.ExceptionObject.ToString());
             //Process.Start("notepad.exe", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "//Gnome Extractor//output.log");
             if (Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName.ToLower() == "ru")

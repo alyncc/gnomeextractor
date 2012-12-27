@@ -117,17 +117,23 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AllTables" xml:space="preserve">
-    <value>Edit all tables</value>
+  <data name="Attributes" xml:space="preserve">
+    <value>Attributes</value>
   </data>
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="Combat" xml:space="preserve">
+    <value>Combat</value>
   </data>
   <data name="FixedEditMode" xml:space="preserve">
     <value>Same</value>
   </data>
   <data name="GroupBox.Header" xml:space="preserve">
     <value>Select a value</value>
+  </data>
+  <data name="Labor" xml:space="preserve">
+    <value>Labor</value>
   </data>
   <data name="RandomEditMode" xml:space="preserve">
     <value>Random</value>

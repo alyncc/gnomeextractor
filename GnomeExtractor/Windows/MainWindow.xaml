@@ -38,7 +38,6 @@
         </Style>
         <Style TargetType="DataGridCell">
             <Setter Property="Foreground" Value="Black" />
-            <!--<Setter Property="Focusable" Value="{Binding Converter={StaticResource CellFocusableConverter}, RelativeSource={RelativeSource Self}, Path=Column.Header}"/>-->
             <EventSetter Event="PreviewMouseDown" Handler="DataGridCell_PreviewMouseDown" />
         </Style>
         <Style TargetType="DataGridRowHeader">
@@ -128,7 +127,7 @@
                                 </DataGridTextColumn>
                                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" MaxWidth="200" />
                                 <DataGridComboBoxColumn x:Name="professionsColumn" Header="Profession" SelectedValueBinding="{Binding Profession.Title}"
-                                                        SelectedValuePath="Title" DisplayMemberPath="Title">
+                                                        SelectedValuePath="Title" DisplayMemberPath="Title" MaxWidth="200">
                                     <DataGridComboBoxColumn.ElementStyle>
                                         <Style TargetType="ComboBox">
                                             <Setter Property="ItemsSource" Value="{Binding Path=DataContext.Professions, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
@@ -526,7 +525,7 @@
                                 
                             </ListBox>
                         </GroupBox>
-                        <GroupBox Grid.Row="0" Grid.RowSpan="2" Header="{Resx Professions}">
+                        <GroupBox Grid.Row="0" Grid.RowSpan="2" Name="professionsEditingGroupBox" Header="{Resx Professions}" IsEnabled="False">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -539,8 +538,11 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <ComboBox Name="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True" 
-                                              DisplayMemberPath="Title" ItemsSource="{Binding Professions}" />
+                                    <ComboBox Name="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True"
+                                              DisplayMemberPath="Title" ItemsSource="{Binding Professions}" 
+                                              PreviewTextInput="professionsComboBox_PreviewTextInput" 
+                                              PreviewDrop="professionsComboBox_PreviewDrop" 
+                                              PreviewKeyDown="professionsComboBox_PreviewKeyDown"/>
                                     <Button Name="addProfessionButton" Grid.Column="1" Content="Add" ToolTip="Add" Margin="5" Click="AddProfessionButton_Click" Padding="3" />
                                     <Button Name="removeProfessionButton" Grid.Column="2" Content="Del" ToolTip="Del" Margin="5" Click="RemoveProfessionButton_Click" Padding="3" />
                                 </Grid>
@@ -595,16 +597,16 @@
                                 <DataGridTextColumn Header="Sword" Binding="{Binding CombatSkills[2].Level, Mode=TwoWay}" />
                                 <DataGridTextColumn Header="Axe" Binding="{Binding CombatSkills[3].Level, Mode=TwoWay}" />
                                 <DataGridTextColumn Header="Hammer" Binding="{Binding CombatSkills[4].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Crossbow" Binding="{Binding CombatSkills[8].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Gun" Binding="{Binding CombatSkills[9].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Shield" Binding="{Binding CombatSkills[6].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Dodge" Binding="{Binding CombatSkills[5].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Armor" Binding="{Binding CombatSkills[7].Level, Mode=TwoWay}" />
-                                <!--<DataGridTextColumn Header="Fitness" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Nimbleness" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Curiosity" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Focus" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />
-                                <DataGridTextColumn Header="Charm" Binding="{Binding LaborSkills[0].Level, Mode=TwoWay}" />-->
+                                <DataGridTextColumn Header="Crossbow" Binding="{Binding CombatSkills[5].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Gun" Binding="{Binding CombatSkills[6].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Shield" Binding="{Binding CombatSkills[7].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Dodge" Binding="{Binding CombatSkills[8].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Armor" Binding="{Binding CombatSkills[9].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Fitness" Binding="{Binding Attributes[0].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Nimbleness" Binding="{Binding Attributes[1].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Curiosity" Binding="{Binding Attributes[2].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Focus" Binding="{Binding Attributes[3].Level, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Charm" Binding="{Binding Attributes[4].Level, Mode=TwoWay}" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>

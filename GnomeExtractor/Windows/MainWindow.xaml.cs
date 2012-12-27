@@ -30,7 +30,7 @@ namespace GnomeExtractor
         bool isWindowsXP = false;
         bool isLatestVersion = false;
         bool isUpdatesNeeded = false;
-        bool isCheatsOn;
+        
         bool isLabelsVertical;
         bool isAutoUpdateEnabled;
         string filePath;
@@ -47,7 +47,6 @@ namespace GnomeExtractor
         BackgroundWorker updater = new BackgroundWorker();
         BackgroundWorker backgrWorker = new BackgroundWorker();
         OperatingSystem osInfo = Environment.OSVersion;
-        //DataSet dataSetTables = new DataSet();
 
         #region WindowHandling
         public MainWindow()
@@ -94,7 +93,7 @@ namespace GnomeExtractor
             this.Top = settings.Fields.LastRunLocation.Y;
             this.Width = settings.Fields.LastRunSize.Width;
             this.Height = settings.Fields.LastRunSize.Height;
-            this.isCheatsOn = settings.Fields.LastRunCheatMode;
+            Globals.ViewModel.IsCheatsEnabled = settings.Fields.LastRunCheatMode;
             this.isLabelsVertical = settings.Fields.LastRunIsLablesVertical;
             this.tabControl.SelectedIndex = settings.Fields.TabItemSelected;
             this.isAutoUpdateEnabled = settings.Fields.IsAutoUpdateEnabled;
@@ -126,7 +125,7 @@ namespace GnomeExtractor
             settings.Fields.LastRunWindowState = this.WindowState;
             settings.Fields.LastRunLocation = new Point(Left, Top);
             settings.Fields.LastRunSize = new Size(Width, Height);
-            settings.Fields.LastRunCheatMode = this.isCheatsOn;
+            settings.Fields.LastRunCheatMode = Globals.ViewModel.IsCheatsEnabled;
             settings.Fields.LastRunIsLablesVertical = !this.isLabelsVertical;
             settings.Fields.TabItemSelected = tabControl.SelectedIndex;
             settings.Fields.IsAutoUpdateEnabled = isAutoUpdateEnabled;
@@ -173,36 +172,20 @@ namespace GnomeExtractor
             {
                 Globals.Logger.Trace("FastEditor OK button has been clicked");
 
-                bool isLaborNeeded = false;
-                bool isCombatNeeded = false;
-                if (fastEditor.isAllTablesCheckBox.IsChecked == true)
+                if (fastEditor.fixedModeRadioButton.IsChecked == true)
                 {
-                    isLaborNeeded = true;
-                    isCombatNeeded = true;
-                    Globals.Logger.Trace("Changing values in all skills...");
-                }
-                else
-                {
-                    if (tabControl.SelectedIndex == 0)
+                    foreach (var gnome in Globals.ViewModel.Gnomes)
                     {
-                        Globals.Logger.Trace("Changing values in labor skills...");
-                        isLaborNeeded = true;
+                        if (fastEditor.isLaborNeededCheckBox.IsChecked == true)
+                            foreach (var skill in gnome.LaborSkills)
+                                skill.Level = fastEditor.Value;
+                        if (fastEditor.isCombatNeededCheckBox.IsChecked == true)
+                            foreach (var skill in gnome.CombatSkills)
+                                skill.Level = fastEditor.Value;
+                        if (fastEditor.isAttributesNeededCheckBox.IsChecked == true)
+                            foreach (var attribute in gnome.Attributes)
+                                attribute.Level = fastEditor.Value;
                     }
-                    if (tabControl.SelectedIndex == 1)
-                    {
-                        Globals.Logger.Trace("Changing values in combat skills...");
-                        isCombatNeeded = true;
-                    }
-                }
-
-                foreach (var gnome in Globals.ViewModel.Gnomes)
-                {
-                    if (isLaborNeeded)
-                        foreach (var skill in gnome.LaborSkills)
-                            skill.Level = fastEditor.Value;
-                    if (isCombatNeeded)
-                        foreach (var skill in gnome.CombatSkills)
-                            skill.Level = fastEditor.Value;
                 }
             }
         }
@@ -247,31 +230,38 @@ namespace GnomeExtractor
                 DisableControlsForBackgroundWorker();
                 filePath = openDlg.FileName;
 
-                backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_LoadGame);
-                backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_LoadGameCompleted);
+                // Cleaning before loading
+                this.DataContext = null;
+                wrapPanelStatistics.DataContext = null;
+                
+                Globals.ViewModel.Gnomes.Clear();
+                Globals.ViewModel.Professions.Clear();
+
+                backgrWorker.DoWork += new DoWorkEventHandler(LoadGame_BackgroundWorker);
+                backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(LoadGameCompleted_BackgroundWorker);
                 backgrWorker.RunWorkerAsync(openDlg.SafeFileName);
             }
         }
 
-        private void backgrWorker_LoadGameCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void LoadGameCompleted_BackgroundWorker(object sender, RunWorkerCompletedEventArgs e)
         {
-            DataContext = Globals.ViewModel;
+            this.DataContext = Globals.ViewModel;
 
             mapStatistics = new Statistics(gnomanEmpire);
             wrapPanelStatistics.DataContext = mapStatistics;
 
             GridState();
-            backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_LoadGame);
-            backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_LoadGameCompleted);
+            backgrWorker.DoWork -= new DoWorkEventHandler(LoadGame_BackgroundWorker);
+            backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(LoadGameCompleted_BackgroundWorker);
 
             statusBarLabel.Content = resourceManager.GetString("chosenFile") + " " + System.IO.Path.GetFileName(filePath) +
                     " " + resourceManager.GetString("worldName") + " " + gnomanEmpire.World.AIDirector.PlayerFaction.Name;
 
             Globals.Logger.Info("World initialization complete");
-            ControlStates();            
+            ControlStates();
         }
 
-        private void backgrWorker_LoadGame(object sender, DoWorkEventArgs e)
+        private void LoadGame_BackgroundWorker(object sender, DoWorkEventArgs e)
         {
             Globals.Logger.Info("World initialization...");
             Globals.Logger.Info("Loading {0} save file...", e.Argument);
@@ -308,15 +298,15 @@ namespace GnomeExtractor
             Globals.Logger.Debug("Save button has been clicked");
             DisableControlsForBackgroundWorker();
 
-            backgrWorker.DoWork += new DoWorkEventHandler(backgrWorker_SaveGame);
-            backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
+            backgrWorker.DoWork += new DoWorkEventHandler(SaveGame_BackgroundWorker);
+            backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(SaveGameCompleted_BackgroundWorker);
             backgrWorker.RunWorkerAsync();
         }
 
-        private void backgrWorker_SaveGameCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void SaveGameCompleted_BackgroundWorker(object sender, RunWorkerCompletedEventArgs e)
         {
-            backgrWorker.DoWork -= new DoWorkEventHandler(backgrWorker_SaveGame);
-            backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_SaveGameCompleted);
+            backgrWorker.DoWork -= new DoWorkEventHandler(SaveGame_BackgroundWorker);
+            backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(SaveGameCompleted_BackgroundWorker);
 
             statusBarLabel.Content = resourceManager.GetString("saveDoneMessage") + " " + gnomanEmpire.CurrentWorld + ", " +
                                      resourceManager.GetString("backupDoneMessage") + " " + lastBackupFileName;
@@ -325,7 +315,7 @@ namespace GnomeExtractor
             ControlStates();
         }
 
-        private void backgrWorker_SaveGame(object sender, DoWorkEventArgs e)
+        private void SaveGame_BackgroundWorker(object sender, DoWorkEventArgs e)
         {
             Globals.Logger.Info("World saving...");
 
@@ -339,16 +329,25 @@ namespace GnomeExtractor
             foreach (var unsavedGnome in Globals.ViewModel.Gnomes)
             {
                 var gnome = gnomanEmpire.Map.Levels[unsavedGnome.Level][unsavedGnome.Row][unsavedGnome.Column].Characters[unsavedGnome.Position];
+
+                // Setting personal info
                 gnome.SetName(unsavedGnome.Name);
-                foreach (var skill in unsavedGnome.LaborSkills)
-                    gnome.SetSkillLevel(skill.Type, skill.Level);
-                foreach (var skill in unsavedGnome.CombatSkills)
-                    gnome.SetSkillLevel(skill.Type, skill.Level);
+
+                // Setting skill/attribute levels
+                foreach (var laborSkill in unsavedGnome.LaborSkills)
+                    gnome.SetSkillLevel(laborSkill.Type, laborSkill.Level);
+                foreach (var combatSkill in unsavedGnome.CombatSkills)
+                    gnome.SetSkillLevel(combatSkill.Type, combatSkill.Level);
+                foreach (var attribute in unsavedGnome.Attributes)
+                    gnome.SetAttributeLevel(attribute.Type, (int)attribute.Level);
+
+                // Setting professions
                 gnome.Mind.Profession = unsavedGnome.Profession;
                 for (int i = gnomanEmpire.Fortress.Professions.Count; i > 0; i--)
                     gnomanEmpire.Fortress.Professions.RemoveAt(i - 1);
                 foreach (var profession in Globals.ViewModel.Professions)
-                    gnomanEmpire.Fortress.Professions.Add(profession);
+                    if (profession.Title != "Custom")
+                        gnomanEmpire.Fortress.Professions.Add(profession);
 
                 Globals.Logger.Debug("Gnome {0} written", gnome.Name());
             }
@@ -400,11 +399,11 @@ namespace GnomeExtractor
         {
             Globals.Logger.Debug("Cheat mode button has been clicked");
 
-            isCheatsOn = !isCheatsOn;
+            Globals.ViewModel.IsCheatsEnabled = !Globals.ViewModel.IsCheatsEnabled;
             ControlStates();
             GridState();
 
-            Globals.Logger.Info("Cheat mode {0}", (isCheatsOn) ? "enabled" : "disabled");
+            Globals.Logger.Info("Cheat mode {0}", (Globals.ViewModel.IsCheatsEnabled) ? "enabled" : "disabled");
         }
 
         private void updatingMenuItem_Click(object sender, RoutedEventArgs e)
@@ -508,16 +507,32 @@ namespace GnomeExtractor
 
         private void backgrWorker_ExportToCSV(object sender, DoWorkEventArgs e)
         {
-            //Directory.CreateDirectory("Export\\");
-            //foreach (DataTable table in dataSetTables.Tables)
-            //{
-            //    var path = "Export\\" + table.TableName.ToLower() + ".csv";
-            //    FileStream fs = new FileStream(path, FileMode.Create);
-            //    StreamWriter sw = new StreamWriter(fs);
-            //    sw.Write(table.ToCSV());
-            //    sw.Close();
-            //    Globals.logger.Info("File {0} is created", path);
-            //}
+            // Opening file stream
+            Directory.CreateDirectory(Globals.AppDataPath);
+            var path = Globals.AppDataPath + "\\export.csv";
+            FileStream fs = new FileStream(path, FileMode.Create);
+            StreamWriter sw = new StreamWriter(fs);
+
+            // Writing first row
+            sw.Write("Name;Profession;");
+            foreach (var skill in SkillDef.AllLaborSkills())
+                sw.Write(skill.ToString() + ";");
+            foreach (var skill in SkillDef.AllCombatSkills())
+                sw.Write(skill.ToString() + ";");
+
+            // Writing gnomes
+            foreach (var gnome in Globals.ViewModel.Gnomes)
+            {
+                sw.Write("\n" + gnome.Name + ";" + gnome.Profession.Title + ";");
+                foreach (var skill in gnome.LaborSkills)
+                    sw.Write(skill.Level + ";");
+                foreach (var skill in gnome.CombatSkills)
+                    sw.Write(skill.Level + ";");
+                foreach (var attribute in gnome.Attributes)
+                    sw.Write(attribute.Level + ";");
+            }
+            sw.Close();
+            Globals.Logger.Info("File {0} is created", path);
         }
 
         private void backgrWorker_ExportToCSVCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -528,6 +543,8 @@ namespace GnomeExtractor
             Globals.Logger.Info("Export is complete");
             statusBarLabel.Content = resourceManager.GetString("exportDoneMessage");
 
+            Process.Start(Globals.AppDataPath);
+
             ControlStates();
         }
         #endregion
@@ -537,39 +554,36 @@ namespace GnomeExtractor
         {
             cheatsMenuItem.Visibility = (settings.Fields.IsCheatsEnabled) ? Visibility.Visible : Visibility.Collapsed;
             if (!settings.Fields.IsCheatsEnabled) settings.Fields.LastRunCheatMode = false;
-            fastEditMenuItem.IsEnabled = (gnomanEmpire != null && isCheatsOn);
-            saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = (gnomanEmpire != null && !backgrWorker.IsBusy);
+            fastEditMenuItem.IsEnabled = (gnomanEmpire != null && Globals.ViewModel.IsCheatsEnabled);
+            saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = professionsEditingGroupBox.IsEnabled = (gnomanEmpire != null && !backgrWorker.IsBusy);
             openMenuItem.IsEnabled = !(backgrWorker.IsBusy);
-            cheatModeMenuItem.IsChecked = isCheatsOn;
+            cheatModeMenuItem.IsChecked = Globals.ViewModel.IsCheatsEnabled;
             autoUpdatingMenuItem.IsChecked = isAutoUpdateEnabled;
             progressBarMain.Visibility = (backgrWorker.IsBusy) ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void DisableControlsForBackgroundWorker()
         {
-            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = exportMenuItem.IsEnabled = false;
+            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = 
+                exportMenuItem.IsEnabled = professionsEditingGroupBox.IsEnabled = false;
             progressBarMain.Visibility = System.Windows.Visibility.Visible;
         }
 
         private void GridState()
         {
-            //if (gnomanEmpire != null)
-            //{
-            //    var tempIndex = tabControl.SelectedIndex;
-            //    tabControl.SelectedIndex = 0;
-            //    dataGridProfessions.UpdateLayout();
-            //    for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[0]].Columns.Count; i++)
-            //        dataGridProfessions.Columns[i].IsReadOnly = !isCheatsOn;
-            //    tabControl.SelectedIndex = 1;
-            //    dataGridCombat.UpdateLayout();
-            //    for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[1]].Columns.Count; i++)
-            //        dataGridCombat.Columns[i].IsReadOnly = !isCheatsOn;
-            //    tabControl.SelectedIndex = 2;
-            //    dataGridAttributes.UpdateLayout();
-            //    for (int i = Globals.FirstColumnNames.Length; i < dataSetTables.Tables[dataGridNames[2]].Columns.Count; i++)
-            //        dataGridAttributes.Columns[i].IsReadOnly = !isCheatsOn;
-            //    tabControl.SelectedIndex = tempIndex;
-            //}
+            if (gnomanEmpire != null)
+            {
+                var tempIndex = tabControl.SelectedIndex;
+                tabControl.SelectedIndex = 0;
+                dataGridProfessions.UpdateLayout();
+                for (int i = Globals.FirstColumnCount; i < dataGridProfessions.Columns.Count; i++)
+                    dataGridProfessions.Columns[i].IsReadOnly = !Globals.ViewModel.IsCheatsEnabled;
+                tabControl.SelectedIndex = 1;
+                dataGridCombat.UpdateLayout();
+                for (int i = Globals.FirstColumnCount; i < dataGridCombat.Columns.Count; i++)
+                    dataGridCombat.Columns[i].IsReadOnly = !Globals.ViewModel.IsCheatsEnabled;
+                tabControl.SelectedIndex = tempIndex;
+            }
         }
 
         private void UpdateLanguageMenus()
@@ -597,23 +611,33 @@ namespace GnomeExtractor
         private void DataGridCell_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             // Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)
-            if (e.ChangedButton == MouseButton.Right || (e.ChangedButton == MouseButton.Left && !isCheatsOn))
+            if (e.ChangedButton == MouseButton.Right || (e.ChangedButton == MouseButton.Left && !Globals.ViewModel.IsCheatsEnabled) && tabControl.SelectedIndex == 0)
             {
                 // Getting indexes
                 var cell = sender as DataGridCell;
                 if (cell.Column.DisplayIndex > Globals.FirstColumnCount - 1)
                 {
-                    var row = DataGridRow.GetRowContainingElement(cell);
-                    var gnomeIndex = Int32.Parse((dataGridProfessions.Columns[0].GetCellContent(row) as TextBlock).Text);
-                    var skillIndex = cell.Column.DisplayIndex - Globals.FirstColumnCount;
+                    //var skillIndex = cell.Column.DisplayIndex - Globals.FirstColumnCount;
+                    var skillIndex = dataGridProfessions.Columns.IndexOf(cell.Column) - Globals.FirstColumnCount;
+                    var gnome = cell.DataContext as Gnome;
+                    if (skillIndex > gnome.LaborSkills.Count) return;
 
-                    Globals.ViewModel.Gnomes[gnomeIndex].LaborSkills[skillIndex].IsAllowed = !Globals.ViewModel.Gnomes[gnomeIndex].LaborSkills[skillIndex].IsAllowed;
+                    // Changing skills
+                    gnome.LaborSkills[skillIndex].IsAllowed = !gnome.LaborSkills[skillIndex].IsAllowed;
+                    if (gnome.LaborSkills[skillIndex].IsAllowed)
+                        gnome.Profession.AllowedSkills.AddSkill(gnome.LaborSkills[skillIndex].Type);
+                    else
+                        gnome.Profession.AllowedSkills.RemoveSkill(gnome.LaborSkills[skillIndex].Type);
+                    var comboBox = professionsColumn.GetCellContent(DataGridRow.GetRowContainingElement(cell)) as ComboBox;
+                    comboBox.SelectedIndex = 0;
                 }
             }
-            //else if (e.ChangedButton == MouseButton.Left && isCheatsOn)
-            //{
-            //    var cell = sender as DataGridCell;
-            //}
+            else
+            {
+                //var cell = sender as DataGridCell;
+                //cell.IsSelected = true;
+                //cell.IsEditing = true;
+            }
         }
 
         private void DataGridRowHeader_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -676,7 +700,7 @@ namespace GnomeExtractor
 
                 (e.EditingElement as TextBox).Text = value;
             }
-            else if (e.Column.DisplayIndex > Globals.FirstColumnCount)
+            if (e.Column.DisplayIndex > Globals.FirstColumnCount - 1)
             {
                 var value = (e.EditingElement as TextBox).Text;
 
@@ -716,6 +740,18 @@ namespace GnomeExtractor
         private void AddProfessionButton_Click(object sender, RoutedEventArgs e)
         {
             var name = professionsComboBox.Text;
+
+            // Abort if already exists
+            foreach (var profession in Globals.ViewModel.Professions)
+            {
+                if (profession.Title == name)
+                {
+                    MessageBox.Show(resourceManager.GetString("professionAlreadyExists"));
+                    return;
+                }
+            }
+
+            // Adding profession
             Profession newProfession = new Profession(name);
             newProfession.AllowedSkills.ClearAll();
             foreach (var skill in Globals.ViewModel.Skills)
@@ -723,6 +759,7 @@ namespace GnomeExtractor
                     newProfession.AllowedSkills.AddSkill(skill.Type);
             Globals.ViewModel.Professions.Add(newProfession);
 
+            // Refreshing combobox
             professionsComboBox.ItemsSource = null;
             professionsComboBox.ItemsSource = Globals.ViewModel.Professions;
         }
@@ -749,7 +786,23 @@ namespace GnomeExtractor
         private void readGnomeButton_Click(object sender, RoutedEventArgs e)
         {
             var gnome = gnomesComboBox.SelectedItem as Gnome;
-            Globals.ViewModel.Skills = gnome.LaborSkills;
+            Globals.ViewModel.Skills = gnome.GetClonedSkills();
+        }
+
+        private void professionsComboBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".IndexOf(e.Text) < 0;
+        }
+
+        private void professionsComboBox_PreviewDrop(object sender, DragEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void professionsComboBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl) || Keyboard.IsKeyDown(Key.Insert))
+                e.Handled = true;
         }
     }
 }

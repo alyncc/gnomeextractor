@@ -520,6 +520,15 @@ namespace GnomeExtractor.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Profession with same title already exists.
+        /// </summary>
+        internal static string professionAlreadyExists {
+            get {
+                return ResourceManager.GetString("professionAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на All changes are saved to the source file:.
         /// </summary>
         internal static string saveDoneMessage {
