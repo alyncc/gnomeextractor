@@ -1,9 +1,9 @@
 8:32am 2012/11/10
 
-GnomeExtractor v0.4
+GnomeExtractor v0.4.1
 
-Copyright © 2012 Waz 
 Copyright © 2012 DanchiZZ
+Copyright © 2012 Waz
 
 This program is designed for viewing and editing some aspects of save game files
 for Gnomoria (http://gnomoria.com/)

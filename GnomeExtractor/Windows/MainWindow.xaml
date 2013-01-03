@@ -1,5 +1,4 @@
-﻿<Window ResxExtension.DefaultResxName="GnomeExtractor.Windows.MainWindow" Language="{UICulture}" 
-        x:Class="GnomeExtractor.MainWindow"
+﻿<Window x:Class="GnomeExtractor.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:GnomeExtractor"
@@ -53,47 +52,60 @@
     </Window.Resources>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
-            <MenuItem Name="fileMenuItem" Header="{Resx File}">
-                <MenuItem Name="openMenuItem" Click="openMenuItem_Click" Header="{Resx Open}">
+            <MenuItem Name="fileMenuItem" Header="{Binding Language.File}">
+                <MenuItem Name="openMenuItem" Click="openMenuItem_Click" Header="{Binding Language.Open}">
                     <MenuItem.Icon>
-                        <Image Stretch="None" Source="../Resources/folder_green_open.png" />
+                        <Image Stretch="None" Source="../Resources/open_small.png" />
                     </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Name="saveMenuItem" Click="saveMenuItem_Click" Header="{Resx Save}">
-                    <MenuItem.Icon>
-                        <Image Stretch="None" Source="../Resources/floppy_unmount.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Name="exportMenuItem" Click="exportMenuItem_Click" Header="{Resx Export}">
-                    
                 </MenuItem>
                 <Separator />
-                <MenuItem Name="exitMenuItem" Click="exitMenuItem_Click" Header="{Resx Exit}" />
-            </MenuItem>
-            <MenuItem Name="settingsMenuItem" Header="{Resx Settings}">
-                <MenuItem Name="languageMenuItem" Header="{Resx Language}">
-                    <MenuItem Name="russianMenuItem" Header="{Resx Russian}" Click="russianMenuItem_Click" />
-                    <MenuItem Name="englishMenuItem" Header="{Resx English}" Click="englishMenuItem_Click" />
+                <MenuItem Name="saveMenuItem" Click="saveMenuItem_Click" Header="{Binding Language.Save}">
+                    <MenuItem.Icon>
+                        <Image Stretch="None" Source="../Resources/save_small.png" />
+                    </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Name="autoUpdatingMenuItem" Header="{Resx AutoUpdating}" Click="autoUpdatingMenuItem_Click" />
+                <MenuItem Name="exportMenuItem" Click="exportMenuItem_Click" Header="{Binding Language.Export}">
+                    <MenuItem.Icon>
+                        <Image Stretch="None" Source="../Resources/export_small.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Name="exitMenuItem" Click="exitMenuItem_Click" Header="{Binding Language.Exit}" />
             </MenuItem>
-            <MenuItem Name="cheatsMenuItem" Header="{Resx Cheats}">
-                <MenuItem Name="cheatModeMenuItem" Header="{Resx CheatMode}" Click="cheatModeMenuItem_Checked" />
-                <MenuItem Name="fastEditMenuItem" Header="{Resx FastRedactor}" Click="fastEditMenuItem_Click" />
+            <MenuItem Name="settingsMenuItem" Header="{Binding Language.Settings}">
+                <MenuItem Name="languageMenuItem" Header="{Binding Language.LanguageMenu}" ItemsSource="{Binding Languages}" >
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding LanguageTitle}" />
+                            <EventSetter Event="Click" Handler="languageMenuItem_Click" />
+                            <!--<Setter Property="Command" Value="{Binding ActivateCommand}"/>-->
+                            <!--<Setter Property="IsChecked" Value="{Binding IsActive}" />
+                            <Setter Property="IsCheckable" Value="True"/>-->
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                <MenuItem Name="autoUpdatingMenuItem" Header="{Binding Language.AutoUpdating}" Click="autoUpdatingMenuItem_Click" />
             </MenuItem>
-            <MenuItem Name="helpMenuItem" Header="{Resx Help}">
-                <MenuItem Name="aboutMenuItem" Header="{Resx About}" Click="aboutMenuItem_Click" />
-                <MenuItem Name="updatingMenuItem" Header="{Resx Updating}" Click="updatingMenuItem_Click" />
+            <MenuItem Name="cheatsMenuItem" Header="{Binding Language.Cheats}">
+                <MenuItem Name="cheatModeMenuItem" Header="{Binding Language.CheatMode}" Click="cheatModeMenuItem_Checked" />
+                <MenuItem Name="fastEditMenuItem" Header="{Binding Language.FastRedactor}" Click="fastEditMenuItem_Click" />
+            </MenuItem>
+            <MenuItem Name="helpMenuItem" Header="{Binding Language.Help}">
+                <MenuItem Name="aboutMenuItem" Header="{Binding Language.About}" Click="aboutMenuItem_Click" />
+                <MenuItem Name="updatingMenuItem" Header="{Binding Language.Updating}" Click="updatingMenuItem_Click" />
             </MenuItem>
         </Menu>
         <ToolBar Name="toolBar" DockPanel.Dock="Top">
-            <Button Name="openTool" Click="openMenuItem_Click" ToolTip="{Resx OpenToolTip}" IsEnabled="{Binding ElementName=openMenuItem, Path=IsEnabled}">
-                <Image Stretch="None" Source="../Resources/folder_green_open.png" />
-            </Button>
-            <Button Name="saveTool" Click="saveMenuItem_Click" ToolTip="{Resx SaveToolTip}" IsEnabled="{Binding ElementName=saveMenuItem, Path=IsEnabled}">
-                <Image Stretch="None" Source="../Resources/floppy_unmount.png" />
+            <Button Name="openTool" Click="openMenuItem_Click" ToolTip="{Binding Language.OpenToolTip}" IsEnabled="{Binding ElementName=openMenuItem, Path=IsEnabled}">
+                <Image Stretch="None" Source="../Resources/open.png" />
             </Button>
             <Separator />
+            <Button Name="saveTool" Click="saveMenuItem_Click" ToolTip="{Binding Language.SaveToolTip}" IsEnabled="{Binding ElementName=saveMenuItem, Path=IsEnabled}">
+                <Image Stretch="None" Source="../Resources/save.png" />
+            </Button>
+            <Button Name="exportTool" Click="exportMenuItem_Click" ToolTip="{Binding Language.ExportToolTip}" IsEnabled="{Binding ElementName=exportMenuItem, Path=IsEnabled}">
+                <Image Stretch="None" Source="../Resources/export.png" />
+            </Button>
         </ToolBar>
         <StatusBar Name="statusBar" DockPanel.Dock="Bottom">
             <StatusBarItem Name="labelStatusBarItem" HorizontalContentAlignment="Stretch">
@@ -102,19 +114,19 @@
                         <ColumnDefinition />
                         <ColumnDefinition Width="150" />
                     </Grid.ColumnDefinitions>
-                    <Label Name="statusBarLabel" Grid.Column="0" Content="{Resx Welcome}" />
+                    <Label Name="statusBarLabel" Grid.Column="0" Content="{Binding Language.Welcome}" />
                     <ProgressBar Name="progressBarMain" Grid.Column="1" Visibility="Hidden" SmallChange="1" IsIndeterminate="True" />
                 </Grid>
             </StatusBarItem>
         </StatusBar>
         <TabControl Name="tabControl" Margin="10" SelectionChanged="tabControl_SelectionChanged">
-            <TabItem Name="professionsTabItem" Header="{Resx Professions}">
+            <TabItem Name="professionsTabItem" Header="{Binding Language.Professions}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition MinWidth="500" Width="75*" />
                         <ColumnDefinition MinWidth="200" Width="250"/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox Grid.Column="0" Grid.ColumnSpan="1" Header="{Resx Skills}">
+                    <GroupBox Grid.Column="0" Grid.ColumnSpan="1" Header="{Binding Language.Skills}">
                         <DataGrid Name="dataGridProfessions" AutoGenerateColumns="False" Sorting="DataGrid_Sorting" 
                                   CellEditEnding="DataGrid_CellEditEnding" ItemsSource="{Binding Gnomes}">
                             <DataGrid.Columns>
@@ -520,12 +532,12 @@
                             <RowDefinition Height="45*" />
                             <RowDefinition Height="55*" />
                         </Grid.RowDefinitions>
-                        <GroupBox Grid.Row="0" Header="{Resx Changes}" IsEnabled="False" Visibility="Hidden">
+                        <GroupBox Grid.Row="0" Header="{Binding Language.Changes}" IsEnabled="False" Visibility="Hidden">
                             <ListBox Margin="5">
                                 
                             </ListBox>
                         </GroupBox>
-                        <GroupBox Grid.Row="0" Grid.RowSpan="2" Name="professionsEditingGroupBox" Header="{Resx Professions}" IsEnabled="False">
+                        <GroupBox Grid.Row="0" Grid.RowSpan="2" Name="professionsEditingGroupBox" Header="{Binding Language.Professions}" IsEnabled="False">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -538,22 +550,26 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <ComboBox Name="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True"
+                                    <ComboBox Name="professionsComboBox" Grid.Column="0" Margin="5" IsEditable="True" VerticalAlignment="Center"
                                               DisplayMemberPath="Title" ItemsSource="{Binding Professions}" 
                                               PreviewTextInput="professionsComboBox_PreviewTextInput" 
                                               PreviewDrop="professionsComboBox_PreviewDrop" 
                                               PreviewKeyDown="professionsComboBox_PreviewKeyDown" SelectionChanged="professionsComboBox_SelectionChanged"/>
-                                    <Button Name="addProfessionButton" Grid.Column="1" Content="Add" ToolTip="Add" Margin="5" Click="AddProfessionButton_Click" Padding="3" />
-                                    <Button Name="removeProfessionButton" Grid.Column="2" Content="Del" ToolTip="Del" Margin="5" Click="RemoveProfessionButton_Click" Padding="3" />
+                                    <Button Name="addProfessionButton" Grid.Column="1" ToolTip="{Binding Language.Add}" Margin="5" Click="AddProfessionButton_Click" >
+                                        <Image Source="../Resources/add.png" />
+                                    </Button>
+                                    <Button Name="removeProfessionButton" Grid.Column="2" ToolTip="{Binding Language.Remove}" Margin="5" Click="RemoveProfessionButton_Click" >
+                                        <Image Source="../Resources/remove.png" />
+                                    </Button>
                                 </Grid>
                                 <Grid Grid.Row="1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0" Name="gnomesComboBox" Margin="5" DisplayMemberPath="Name"
+                                    <ComboBox Grid.Column="0" Name="gnomesComboBox" Margin="5" DisplayMemberPath="Name" VerticalAlignment="Center"
                                               ItemsSource="{Binding Path=Gnomes}" />
-                                    <Button Grid.Column="1" Name="readGnomeButton" Content="{Resx ReadGnome}" Margin="5" Click="readGnomeButton_Click" Padding="8,3" />
+                                    <Button Grid.Column="1" Name="readGnomeButton" Content="{Binding Language.ReadGnome}" Margin="5" Click="readGnomeButton_Click" Padding="8,3" />
                                 </Grid>
                                 <ListBox Name="professionsListBox" Grid.Row="2" Margin="5" 
                                          ItemsSource="{Binding Skills}">
@@ -570,13 +586,13 @@
                     </Grid>
                 </Grid>
             </TabItem>
-            <TabItem Header="{Resx Combat}">
+            <TabItem Header="{Binding Language.Squads}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition MinWidth="250" Width="Auto" />
                         <ColumnDefinition MinWidth="200" Width="500"/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox Grid.Column="0" Header="{Resx Skills}">
+                    <GroupBox Grid.Column="0" Header="{Binding Language.Skills}">
                         <DataGrid Name="dataGridCombat" AutoGenerateColumns="False" Sorting="DataGrid_Sorting" 
                                   CellEditEnding="DataGrid_CellEditEnding" ItemsSource="{Binding Gnomes}">
                             <DataGrid.Columns>
@@ -587,7 +603,7 @@
                                         </Style>
                                     </DataGridTextColumn.CellStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" />
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=TwoWay}" MaxWidth="200" />
                                 <DataGridComboBoxColumn x:Name="squadsColumn" Header="Squad" MaxWidth="0.01"
                                                         DisplayMemberPath="Title" 
                                                         SelectedItemBinding="{Binding ElementName=dataGridProfessions, Path=Profession.Title}"
@@ -612,17 +628,14 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
-            <TabItem Header="{Resx Other}">
+            <TabItem Header="{Binding Language.Other}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <!--<ColumnDefinition Width="Auto" MinWidth="250" />-->
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <GroupBox Header="{Resx Attributes}" Margin="5" Visibility="Collapsed">
-                        <DataGrid Grid.Column="0" Name="dataGridAttributes" Sorting="DataGrid_Sorting" CellEditEnding="DataGrid_CellEditEnding"/>
-                    </GroupBox>
                     <WrapPanel Grid.Column="1" Name="wrapPanelStatistics" >
-                        <GroupBox Header="{Resx World}" Margin="5">
+                        <GroupBox Header="{Binding Language.World}" Margin="5">
                             <Grid Name="worldGrid" Margin="15,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition />
@@ -632,11 +645,11 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="{Resx WorldName}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding WorldName}" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Language.WorldName}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Statistics.WorldName}" />
                             </Grid>
                         </GroupBox>
-                        <GroupBox Header="{Resx Minerals}" Margin="5">
+                        <GroupBox Header="{Binding Language.Minerals}" Margin="5">
                             <Grid Name="mineralsGrid" Margin="15,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition />
@@ -655,28 +668,28 @@
                                     <RowDefinition />
                                     <RowDefinition />
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="{Resx Coal}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Minerals[0].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Text="{Resx Copper}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Minerals[1].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="2" Text="{Resx Malachite}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding Minerals[2].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="3" Text="{Resx Tin}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding Minerals[3].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="4" Text="{Resx Iron}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="4" Text="{Binding Minerals[4].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="5" Text="{Resx Lead}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="5" Text="{Binding Minerals[5].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="6" Text="{Resx Silver}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="6" Text="{Binding Minerals[6].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="7" Text="{Resx Gold}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="7" Text="{Binding Minerals[7].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="8" Text="{Resx Platinum}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="8" Text="{Binding Minerals[8].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="9" Text="{Resx Emerald}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="9" Text="{Binding Minerals[9].Count}" />
-                                <TextBlock Grid.Column="0" Grid.Row="10" Text="{Resx Saphire}" Margin="0,0,10,0" />
-                                <TextBlock Grid.Column="1" Grid.Row="10" Text="{Binding Minerals[10].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding Language.Coal}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Statistics.Minerals[0].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding Language.Copper}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Statistics.Minerals[1].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="2" Text="{Binding Language.Malachite}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding Statistics.Minerals[2].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="3" Text="{Binding Language.Tin}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding Statistics.Minerals[3].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="4" Text="{Binding Language.Iron}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="4" Text="{Binding Statistics.Minerals[4].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="5" Text="{Binding Language.Lead}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="5" Text="{Binding Statistics.Minerals[5].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="6" Text="{Binding Language.Silver}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="6" Text="{Binding Statistics.Minerals[6].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="7" Text="{Binding Language.Gold}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="7" Text="{Binding Statistics.Minerals[7].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="8" Text="{Binding Language.Platinum}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="8" Text="{Binding Statistics.Minerals[8].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="9" Text="{Binding Language.Emerald}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="9" Text="{Binding Statistics.Minerals[9].Count}" />
+                                <TextBlock Grid.Column="0" Grid.Row="10" Text="{Binding Language.Saphire}" Margin="0,0,10,0" />
+                                <TextBlock Grid.Column="1" Grid.Row="10" Text="{Binding Statistics.Minerals[10].Count}" />
                             </Grid>
                         </GroupBox>
                     </WrapPanel>

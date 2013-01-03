@@ -13,6 +13,7 @@ namespace GnomeExtractor
     {
         protected override void OnStartup(StartupEventArgs e)
         {
+            // hook on error before app really starts
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
             // Collecting information
@@ -28,8 +29,6 @@ namespace GnomeExtractor
             Globals.Logger.Debug("OS found: {0}", (Environment.Is64BitOperatingSystem) ? "64 bit" : "32 bit");
             Globals.Logger.Debug(".Net version found: {0}", Environment.Version);
 
-            // hook on error before app really starts
-            //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
             base.OnStartup(e);
         }
 

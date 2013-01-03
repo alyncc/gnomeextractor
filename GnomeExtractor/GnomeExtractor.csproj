@@ -85,9 +85,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Debug\gnomorialib.dll</HintPath>
     </Reference>
-    <Reference Include="loclib">
-      <HintPath>Classes\loclib.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Windows\Microsoft.NET\assembly\GAC_32\Microsoft.Xna.Framework.Game\v4.0_4.0.0.0__842cf8be1de50553\Microsoft.Xna.Framework.Game.dll</HintPath>
@@ -119,12 +116,13 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="Windows\App.xaml">
+    <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Classes\ConnectionViewModel.cs" />
     <Compile Include="Classes\Gnome.cs" />
+    <Compile Include="Classes\LanguageDictonaryEntry.cs" />
     <Compile Include="Classes\Settings.cs" />
     <Compile Include="Resources\Loc.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -147,7 +145,7 @@
     <Compile Include="Windows\About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Windows\App.xaml.cs">
+    <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
@@ -164,6 +162,18 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Resource Include="Resources\export.png" />
+    <Resource Include="Resources\export_small.png" />
+    <Resource Include="Resources\save_small.png" />
+    <Resource Include="Resources\open_small.png" />
+    <Resource Include="Resources\add.png" />
+    <Resource Include="Resources\open.png" />
+    <Resource Include="Resources\remove.png" />
+    <Resource Include="Resources\save.png" />
+    <None Include="Languages\russian.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Resource Include="Languages\english.xml" />
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -175,35 +185,11 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Windows\About.resx">
-      <DependentUpon>About.xaml</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Windows\About.ru-RU.resx">
-      <DependentUpon>About.xaml</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Windows\FastEditor.resx">
-      <DependentUpon>FastEditor.xaml</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Windows\FastEditor.ru-RU.resx">
-      <DependentUpon>FastEditor.xaml</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Windows\MainWindow.resx">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Windows\MainWindow.ru-RU.resx">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Resources\Loc.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Loc.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Loc.ru-Ru.resx" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\floppy_unmount.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\folder_green_open.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">

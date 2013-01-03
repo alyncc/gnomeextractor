@@ -5,7 +5,7 @@ using System;
 
 namespace GnomeExtractor
 {
-    class Statistics
+    public class Statistics
     {
         string worldName;
         MineralStatistic[] minerals = new MineralStatistic[Enum.GetNames(typeof(MineralID)).Length];

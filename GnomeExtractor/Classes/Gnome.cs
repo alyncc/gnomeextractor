@@ -80,6 +80,20 @@ namespace GnomeExtractor
                 skill.IsAllowed = allowedSkills.IsSkillAllowed(skill.Type);
         }
 
+        /// <summary>
+        /// Updating AllowedSkills property for custom professions
+        /// </summary>
+        public void UpdateAllowedSkills()
+        {
+            if (profession.Title == "Custom")
+            {
+                profession = new Profession(profession.Title);
+                profession.AllowedSkills.ClearAll();
+                foreach (var skill in laborSkills)
+                    if (skill.IsAllowed) profession.AllowedSkills.AddSkill(skill.Type);
+            }
+        }
+
         public List<SkillEntry> GetClonedSkills()
         {
             List<SkillEntry> skills = new List<SkillEntry>();
@@ -145,6 +159,7 @@ namespace GnomeExtractor
         {
             this.level = level;
             this.name = type.ToString();
+            if (type == CharacterSkillType.LaborEnd) this.name = "Hauling";
             this.type = type;
             this.isAllowed = isAllowed;
         }

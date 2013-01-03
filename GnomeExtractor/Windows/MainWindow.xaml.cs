@@ -1,47 +1,42 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Resources;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using Game;
 using GameLibrary;
-using Infralution.Localization.Wpf;
 using Microsoft.Win32;
 
 namespace GnomeExtractor
 {
     public partial class MainWindow : Window
     {
+        bool isDebugMode = false; // Changing this in project page didn't give any result
         bool isWindowsXP = false;
         bool isLatestVersion = false;
         bool isUpdatesNeeded = false;
-        
         bool isLabelsVertical;
         bool isAutoUpdateEnabled;
         string filePath;
         string lastBackupFileName;
-        string appStartupPath = System.IO.Path.GetDirectoryName(Application.ResourceAssembly.Location);
         string[] dataGridNames = new string[] { "dataGridProfessions", "dataGridCombat", "dataGridAttributes" };
 
+        Task task;
         Version latestVersion;
         Statistics mapStatistics;
         GnomanEmpire gnomanEmpire;
-        ResourceManager resourceManager;
+        //ResourceManager resourceManager;
         Settings settings = new Settings();
         BackgroundWorker bkgw = new BackgroundWorker();
         BackgroundWorker updater = new BackgroundWorker();
@@ -59,32 +54,23 @@ namespace GnomeExtractor
             // Read settings from Xml file
             settings.ReadXml();
 
+            // Write english sample file for interpreters
+            if (isDebugMode) Globals.WriteEnglishXml();
+
+            // Read languages
+            Globals.LoadLanguages();
+
             // При первом запуске выставляем культуру установленную в компе, при последующих - предыдущую
             // First run changing localization same like in computer
-            if (settings.Fields.ProgramLanguage == "")
-            {
-                string lang = "en-US";
-                if (CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "ru")
-                    if (File.Exists("ru-RU\\GnomeExtractor.resources.dll"))
-                    {
-                        lang = "ru-RU";
-                        Globals.Logger.Info("Localization ru-RU resource file has been found");
-                    }
-                
-                CultureManager.UICulture = new CultureInfo(lang);
-                settings.Fields.ProgramLanguage = lang;
-            }
-            else
-                CultureManager.UICulture = new CultureInfo(settings.Fields.ProgramLanguage);
+            Globals.ViewModel.Language = Globals.ViewModel.Languages[0];
+            foreach (var language in Globals.ViewModel.Languages)
+                if (settings.Fields.ProgramLanguage == language.LanguageTitle) Globals.ViewModel.Language = language;
 
-            Globals.Logger.Debug("Language selected: {0}", CultureManager.UICulture.Name);
-
-            CultureManager.UICultureChanged += new EventHandler(CultureManager_UICultureChanged);
-            resourceManager = new ResourceManager("GnomeExtractor.Resources.Loc", Assembly.GetExecutingAssembly());
+            Globals.Logger.Debug("Language selected: {0}", Globals.ViewModel.Language.LanguageTitle);
 
             InitializeComponent();
 
-            UpdateLanguageMenus();
+            //UpdateLanguageMenus();
 
             // Загружаем настроечки с прошлого запуска
             // Loading settings
@@ -107,6 +93,8 @@ namespace GnomeExtractor
 
             Globals.Initialize();
 
+            DataContext = Globals.ViewModel;
+
             if (settings.Fields.IsAutoUpdateEnabled) CheckingUpdates(false);
         }
 
@@ -120,36 +108,24 @@ namespace GnomeExtractor
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             Globals.Logger.Debug("Trying to close program...");
-            if (backgrWorker.IsBusy) e.Cancel = true;
-            Globals.Logger.Info("Program closes...");
-            settings.Fields.LastRunWindowState = this.WindowState;
-            settings.Fields.LastRunLocation = new Point(Left, Top);
-            settings.Fields.LastRunSize = new Size(Width, Height);
-            settings.Fields.LastRunCheatMode = Globals.ViewModel.IsCheatsEnabled;
-            settings.Fields.LastRunIsLablesVertical = !this.isLabelsVertical;
-            settings.Fields.TabItemSelected = tabControl.SelectedIndex;
-            settings.Fields.IsAutoUpdateEnabled = isAutoUpdateEnabled;
-            Globals.Logger.Debug("Settings have been saved");
-            settings.WriteXml();
-            if (gnomanEmpire != null) gnomanEmpire = null;
-
-            // Отправляем сейвы обратно, затираем их в локальной папке
-            // Move savefiles in /worlds forder
-            if (isWindowsXP)
+            if (((task != null) && !task.IsCompleted) || backgrWorker.IsBusy || progressBarMain.IsVisible) e.Cancel = true;
+            else
             {
-                Globals.Logger.Debug("Looking for saves in AppDir...");
-                DirectoryInfo dir = new DirectoryInfo(appStartupPath);
-                FileInfo[] fi = dir.GetFiles("*.sav");
-                foreach (FileInfo file in fi)
-                {
-                    File.Copy(file.FullName, GnomanEmpire.SaveFolderPath("\\Worlds") + file.Name, true);
-                    File.Delete(file.FullName);
-                    Globals.Logger.Info("Save file {0} has been moved to the Worlds path", file.Name);
-                }
-                Globals.Logger.Debug("All save files has been moved");
-            }
+                Globals.Logger.Info("Program closes...");
+                settings.Fields.ProgramLanguage = Globals.ViewModel.Language.LanguageTitle;
+                settings.Fields.LastRunWindowState = this.WindowState;
+                settings.Fields.LastRunLocation = new Point(Left, Top);
+                settings.Fields.LastRunSize = new Size(Width, Height);
+                settings.Fields.LastRunCheatMode = Globals.ViewModel.IsCheatsEnabled;
+                settings.Fields.LastRunIsLablesVertical = !this.isLabelsVertical;
+                settings.Fields.TabItemSelected = tabControl.SelectedIndex;
+                settings.Fields.IsAutoUpdateEnabled = isAutoUpdateEnabled;
+                settings.WriteXml();
+                Globals.Logger.Debug("Settings have been saved");
+                if (gnomanEmpire != null) gnomanEmpire = null;
 
-            Globals.Logger.Info("Program is closed");
+                Globals.Logger.Info("Program is closed");
+            }
         }
         #endregion
 
@@ -158,6 +134,7 @@ namespace GnomeExtractor
         {
             Globals.Logger.Debug("About button has been clicked");
             About about = new About();
+            about.DataContext = Globals.ViewModel;
             about.Owner = this;
             about.Show();
         }
@@ -165,6 +142,7 @@ namespace GnomeExtractor
         private void fastEditMenuItem_Click(object sender, RoutedEventArgs e)
         {
             FastEditor fastEditor = new FastEditor();
+            fastEditor.DataContext = Globals.ViewModel;
             fastEditor.Owner = this;
             fastEditor.ShowDialog();
 
@@ -193,33 +171,18 @@ namespace GnomeExtractor
         private void openMenuItem_Click(object sender, RoutedEventArgs e)
         {
             Globals.Logger.Debug("Open button has been clicked");
-            OpenFileDialog openDlg = new OpenFileDialog();
 
-            if (isWindowsXP)
+            if (isWindowsXP && !File.Exists("fixed7z.dll"))
             {
-                Globals.Logger.Info("Copying save files to AppPath...");
-                openDlg.InitialDirectory = appStartupPath;
-                DirectoryInfo dir = new DirectoryInfo(GnomanEmpire.SaveFolderPath("Worlds"));
-                FileInfo[] fi = dir.GetFiles("*.sav");
-                foreach (FileInfo file in fi)
-                {
-                    Globals.Logger.Debug("Save file{0} have been temporary copied to Program directory", file.Name);
-                    File.Copy(file.FullName, appStartupPath + "\\" + file.Name, true);
-
-                }
-                if (!File.Exists("fixed7z.dll"))
-                {
-                    File.Copy("7z.dll", "fixed7z.dll");
-                    Globals.Logger.Debug("Fixed 7z.dll has been created");
-                }
+                File.Copy("7z.dll", "fixed7z.dll");
+                Globals.Logger.Debug("Fixed 7z.dll has been created");
                 SevenZip.SevenZipExtractor.SetLibraryPath("fixed7z.dll");
             }
             else
-            {
                 SevenZip.SevenZipExtractor.SetLibraryPath("7z.dll");
-                openDlg.InitialDirectory = System.IO.Path.GetFullPath(GnomanEmpire.SaveFolderPath("Worlds\\"));
-            }
 
+            OpenFileDialog openDlg = new OpenFileDialog();
+            openDlg.InitialDirectory = System.IO.Path.GetFullPath(GnomanEmpire.SaveFolderPath("Worlds\\"));
             openDlg.Filter = "Gnomoria Save Files (*.sav)|*.sav";
 
             Globals.Logger.Debug("Open file dialog creating...");
@@ -231,11 +194,9 @@ namespace GnomeExtractor
                 filePath = openDlg.FileName;
 
                 // Cleaning before loading
-                this.DataContext = null;
-                wrapPanelStatistics.DataContext = null;
-                
-                Globals.ViewModel.Gnomes.Clear();
-                Globals.ViewModel.Professions.Clear();
+                Globals.ViewModel.Clean();
+
+                Environment.CurrentDirectory = Globals.ApplicationFolder;
 
                 backgrWorker.DoWork += new DoWorkEventHandler(LoadGame_BackgroundWorker);
                 backgrWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(LoadGameCompleted_BackgroundWorker);
@@ -245,17 +206,15 @@ namespace GnomeExtractor
 
         private void LoadGameCompleted_BackgroundWorker(object sender, RunWorkerCompletedEventArgs e)
         {
-            this.DataContext = Globals.ViewModel;
-
             mapStatistics = new Statistics(gnomanEmpire);
-            wrapPanelStatistics.DataContext = mapStatistics;
+            Globals.ViewModel.Statistics = mapStatistics;
 
             GridState();
             backgrWorker.DoWork -= new DoWorkEventHandler(LoadGame_BackgroundWorker);
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(LoadGameCompleted_BackgroundWorker);
 
-            statusBarLabel.Content = resourceManager.GetString("chosenFile") + " " + System.IO.Path.GetFileName(filePath) +
-                    " " + resourceManager.GetString("worldName") + " " + gnomanEmpire.World.AIDirector.PlayerFaction.Name;
+            statusBarLabel.Content = Globals.ViewModel.Language.chosenFile + " " + System.IO.Path.GetFileName(filePath) +
+                    " " + Globals.ViewModel.Language.worldName + " " + gnomanEmpire.World.AIDirector.PlayerFaction.Name;
 
             Globals.Logger.Info("World initialization complete");
             ControlStates();
@@ -291,6 +250,15 @@ namespace GnomeExtractor
 
                                 gnomeIndex++;
                             }
+
+            // Changing unknown professions (Custom like) titles to Custom
+            foreach (var gnome in Globals.ViewModel.Gnomes)
+            {
+                var found = false;
+                foreach (var profession in Globals.ViewModel.Professions)
+                    if (gnome.Profession.Title == profession.Title) found = true;
+                if (!found) gnome.Profession.Title = "Custom";
+            }
         }
 
         private void saveMenuItem_Click(object sender, RoutedEventArgs e)
@@ -308,11 +276,18 @@ namespace GnomeExtractor
             backgrWorker.DoWork -= new DoWorkEventHandler(SaveGame_BackgroundWorker);
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(SaveGameCompleted_BackgroundWorker);
 
-            statusBarLabel.Content = resourceManager.GetString("saveDoneMessage") + " " + gnomanEmpire.CurrentWorld + ", " +
-                                     resourceManager.GetString("backupDoneMessage") + " " + lastBackupFileName;
+            task = gnomanEmpire.SaveGame().ContinueWith((antecedent) =>
+            {
+                Dispatcher.BeginInvoke(new ThreadStart(delegate
+                    {
+                        statusBarLabel.Content = Globals.ViewModel.Language.saveDoneMessage + " " + gnomanEmpire.CurrentWorld + ", " +
+                        Globals.ViewModel.Language.backupDoneMessage + " " + lastBackupFileName;
 
-            Globals.Logger.Info("Save complete");
-            ControlStates();
+                        Globals.Logger.Info("Save complete");
+
+                        ControlStates();
+                    }));
+            });
         }
 
         private void SaveGame_BackgroundWorker(object sender, DoWorkEventArgs e)
@@ -326,9 +301,16 @@ namespace GnomeExtractor
             File.Copy(filePath, dir + lastBackupFileName, true);
             Globals.Logger.Info("Backup file created at" + dir + lastBackupFileName);
 
+            for (int i = gnomanEmpire.Fortress.Professions.Count; i > 0; i--)
+                gnomanEmpire.Fortress.Professions.RemoveAt(i - 1);
+            foreach (var profession in Globals.ViewModel.Professions)
+                if (profession.Title != "Custom")
+                    gnomanEmpire.Fortress.Professions.Add(profession);
+
             foreach (var unsavedGnome in Globals.ViewModel.Gnomes)
             {
                 var gnome = gnomanEmpire.Map.Levels[unsavedGnome.Level][unsavedGnome.Row][unsavedGnome.Column].Characters[unsavedGnome.Position];
+
 
                 // Setting personal info
                 gnome.SetName(unsavedGnome.Name);
@@ -342,17 +324,11 @@ namespace GnomeExtractor
                     gnome.SetAttributeLevel(attribute.Type, (int)attribute.Level);
 
                 // Setting professions
+                unsavedGnome.UpdateAllowedSkills();
                 gnome.Mind.Profession = unsavedGnome.Profession;
-                for (int i = gnomanEmpire.Fortress.Professions.Count; i > 0; i--)
-                    gnomanEmpire.Fortress.Professions.RemoveAt(i - 1);
-                foreach (var profession in Globals.ViewModel.Professions)
-                    if (profession.Title != "Custom")
-                        gnomanEmpire.Fortress.Professions.Add(profession);
 
                 Globals.Logger.Debug("Gnome {0} written", gnome.Name());
             }
-
-            gnomanEmpire.SaveGame();
         }
 
         private void exitMenuItem_Click(object sender, RoutedEventArgs e)
@@ -362,37 +338,10 @@ namespace GnomeExtractor
             Close();
         }
 
-        private void russianMenuItem_Click(object sender, RoutedEventArgs e)
+        private void languageMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            Globals.Logger.Debug("Russian language button clicked");
-
-            if (File.Exists("ru-RU\\GnomeExtractor.resources.dll"))
-            {
-                CultureManager.UICulture = new CultureInfo("ru-RU");
-                settings.Fields.ProgramLanguage = "ru-RU";
-                Thread.CurrentThread.CurrentUICulture = new CultureInfo("ru-RU");
-                Thread.CurrentThread.CurrentCulture = new CultureInfo("ru-RU");
-
-                Globals.Logger.Info("Localization changed to Russian");
-            }
-            else
-            {
-                MessageBox.Show(resourceManager.GetString("localizationNotFound"));
-
-                Globals.Logger.Error("Localization file for Russian language is not found");
-            }
-        }
-
-        private void englishMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            Globals.Logger.Debug("English language button clicked");
-
-            CultureManager.UICulture = new CultureInfo("en-US");
-            settings.Fields.ProgramLanguage = "en-US";
-            Thread.CurrentThread.CurrentUICulture = new CultureInfo("en-US");
-            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-
-            Globals.Logger.Info("Localization changed to English");
+            var language = (sender as MenuItem).DataContext as LanguageDictonaryEntry;
+            Globals.ViewModel.Language = language;
         }
 
         private void cheatModeMenuItem_Checked(object sender, RoutedEventArgs e)
@@ -428,7 +377,7 @@ namespace GnomeExtractor
 
             if (isLatestVersion)
             {
-                if ((bool)e.Result) MessageBox.Show(resourceManager.GetString("latestVersion"));
+                if ((bool)e.Result) MessageBox.Show(Globals.ViewModel.Language.latestVersion);
                 Globals.Logger.Info("Latest version is installed");
             }
             else if (isUpdatesNeeded)
@@ -444,8 +393,8 @@ namespace GnomeExtractor
                 StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.Default);
                 var changes = reader.ReadToEnd();
 
-                if (MessageBoxResult.Yes == MessageBox.Show(resourceManager.GetString("newestVersion") + " " + latestVersion + ", " +
-                    resourceManager.GetString("downloadNewVersion") + "\n\n" + changes, resourceManager.GetString("updateDialogCaption"), MessageBoxButton.YesNo)) Process.Start("http://gnomex.tk");
+                if (MessageBoxResult.Yes == MessageBox.Show(Globals.ViewModel.Language.newestVersion + " " + latestVersion + ", " +
+                    Globals.ViewModel.Language.downloadNewVersion + "\n\n" + changes, Globals.ViewModel.Language.updateDialogCaption, MessageBoxButton.YesNo)) Process.Start("http://gnomex.tk");
             }
             isLatestVersion = false;
             isUpdatesNeeded = false;
@@ -476,10 +425,10 @@ namespace GnomeExtractor
             }
             catch (WebException)
             {
-                MessageBox.Show(resourceManager.GetString("connectionError"));
+                MessageBox.Show(Globals.ViewModel.Language.connectionError);
             }
 
-            
+
 
             if ((bool)e.Argument) e.Result = true;
             else e.Result = false;
@@ -519,6 +468,9 @@ namespace GnomeExtractor
                 sw.Write(skill.ToString() + ";");
             foreach (var skill in SkillDef.AllCombatSkills())
                 sw.Write(skill.ToString() + ";");
+            foreach (var attribute in Enum.GetValues(typeof(CharacterAttributeType)))
+                if (attribute.ToString() != "Count")
+                    sw.Write(attribute.ToString() + ";");
 
             // Writing gnomes
             foreach (var gnome in Globals.ViewModel.Gnomes)
@@ -529,7 +481,8 @@ namespace GnomeExtractor
                 foreach (var skill in gnome.CombatSkills)
                     sw.Write(skill.Level + ";");
                 foreach (var attribute in gnome.Attributes)
-                    sw.Write(attribute.Level + ";");
+                    if (attribute.Name != "Count")
+                        sw.Write(attribute.Level + ";");
             }
             sw.Close();
             Globals.Logger.Info("File {0} is created", path);
@@ -541,7 +494,7 @@ namespace GnomeExtractor
             backgrWorker.RunWorkerCompleted -= new RunWorkerCompletedEventHandler(backgrWorker_ExportToCSVCompleted);
 
             Globals.Logger.Info("Export is complete");
-            statusBarLabel.Content = resourceManager.GetString("exportDoneMessage");
+            statusBarLabel.Content = Globals.ViewModel.Language.exportDoneMessage;
 
             Process.Start(Globals.AppDataPath);
 
@@ -564,7 +517,7 @@ namespace GnomeExtractor
 
         private void DisableControlsForBackgroundWorker()
         {
-            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled = 
+            fastEditMenuItem.IsEnabled = openMenuItem.IsEnabled = saveMenuItem.IsEnabled =
                 exportMenuItem.IsEnabled = professionsEditingGroupBox.IsEnabled = false;
             progressBarMain.Visibility = System.Windows.Visibility.Visible;
         }
@@ -584,18 +537,6 @@ namespace GnomeExtractor
                     dataGridCombat.Columns[i].IsReadOnly = !Globals.ViewModel.IsCheatsEnabled;
                 tabControl.SelectedIndex = tempIndex;
             }
-        }
-
-        private void UpdateLanguageMenus()
-        {
-            string lang = CultureManager.UICulture.TwoLetterISOLanguageName.ToLower();
-            russianMenuItem.IsChecked = (lang == "ru");
-            englishMenuItem.IsChecked = (lang == "en");
-        }
-
-        private void CultureManager_UICultureChanged(object sender, EventArgs e)
-        {
-            UpdateLanguageMenus();
         }
         #endregion
 
@@ -629,6 +570,7 @@ namespace GnomeExtractor
                     else
                         gnome.Profession.AllowedSkills.RemoveSkill(gnome.LaborSkills[skillIndex].Type);
                     var comboBox = professionsColumn.GetCellContent(DataGridRow.GetRowContainingElement(cell)) as ComboBox;
+                    gnome.Profession.Title = "Custom";
                     comboBox.SelectedIndex = 0;
                 }
             }
@@ -679,7 +621,12 @@ namespace GnomeExtractor
         private void DataGridColumnHeaderProfessions_ToolTipOpening(object sender, ToolTipEventArgs e)
         {
             var header = e.Source as DataGridColumnHeader;
-            header.ToolTip = resourceManager.GetString(header.Content.ToString().Replace(" ", String.Empty));
+            try
+            {
+                header.ToolTip = Globals.ViewModel.Language.GetType().GetProperty(header.Content.ToString().Replace(" ", String.Empty)).GetValue(Globals.ViewModel.Language, null);
+            }
+            catch { }
+            //header.ToolTip = resourceManager.GetString(header.Content.ToString().Replace(" ", String.Empty));
         }
 
         private void DataGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
@@ -732,6 +679,7 @@ namespace GnomeExtractor
         }
         #endregion
 
+        #region Professions handling
         private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             //Globals.Logger.Trace("TabControl.SelectedIndex is changed to {0}", tabControl.SelectedIndex);
@@ -746,7 +694,7 @@ namespace GnomeExtractor
             {
                 if (profession.Title == name)
                 {
-                    MessageBox.Show(resourceManager.GetString("professionAlreadyExists"));
+                    MessageBox.Show(Globals.ViewModel.Language.professionAlreadyExists);
                     return;
                 }
             }
@@ -786,7 +734,13 @@ namespace GnomeExtractor
         private void readGnomeButton_Click(object sender, RoutedEventArgs e)
         {
             var gnome = gnomesComboBox.SelectedItem as Gnome;
+
+            if (gnome.Profession.Title == "Custom") professionsComboBox.SelectedIndex = 0;
+            else professionsComboBox.SelectedItem = gnome.Profession;
             Globals.ViewModel.Skills = gnome.GetClonedSkills();
+
+            professionsListBox.ItemsSource = null;
+            professionsListBox.ItemsSource = Globals.ViewModel.Skills;
         }
 
         private void professionsComboBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -807,13 +761,18 @@ namespace GnomeExtractor
 
         private void professionsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (e.AddedItems.Count != 1) return;
             var profession = e.AddedItems[0] as Profession;
-            Globals.ViewModel.Skills.Clear();
-            foreach (var skill in SkillDef.AllLaborSkills())
-                Globals.ViewModel.Skills.Add(new SkillEntry(skill, 5, profession.AllowedSkills.IsSkillAllowed(skill)));
+            if (profession.Title != "Custom" && Globals.ViewModel.Skills.Count > 1)
+            {
+                Globals.ViewModel.Skills.Clear();
+                foreach (var skill in SkillDef.AllLaborSkills())
+                    Globals.ViewModel.Skills.Add(new SkillEntry(skill, 5, profession.AllowedSkills.IsSkillAllowed(skill)));
+            }
 
             professionsListBox.ItemsSource = null;
             professionsListBox.ItemsSource = Globals.ViewModel.Skills;
         }
+        #endregion
     }
 }

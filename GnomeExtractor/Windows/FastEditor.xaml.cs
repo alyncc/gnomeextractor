@@ -13,7 +13,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Resources;
 using System.Reflection;
-using Infralution.Localization.Wpf;
 using System.ComponentModel;
 using System.Threading;
 using System.Globalization;
@@ -24,7 +23,6 @@ namespace GnomeExtractor
     {
         bool isOkClicked;
         bool isFixedMode;
-        ResourceManager resourceManager;
         int value;
         Settings settings = new Settings();
 
@@ -33,8 +31,6 @@ namespace GnomeExtractor
             Globals.Logger.Debug("Creating FastEditor.xaml window...");
 
             settings.ReadXml();
-            Thread.CurrentThread.CurrentUICulture = new CultureInfo(CultureManager.UICulture.Name);
-            resourceManager = new ResourceManager("GnomeExtractor.Properties.Resources", Assembly.GetExecutingAssembly());
 
             InitializeComponent();
 
